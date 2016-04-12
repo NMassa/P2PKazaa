@@ -2,6 +2,7 @@
 from Client import Peer
 import sys
 from Client import _PeerServer
+from Client import Server
 
 # main
 # Inizializzazione del peer
@@ -59,6 +60,8 @@ while p.session_id is None:
             p.login()           # Effettua il login
 
             if p.session_id is not None:
+                server = Server.server()
+                server.start()
                 # Inizializzazione del server multithread che risponde alle richieste di download
                 peerserver = _PeerServer.PeerServer(p.my_ipv4, p.my_ipv6, p.my_port, p.files_list)
                 peerserver.start()
