@@ -33,7 +33,8 @@ class MongoConnection():
                 if found is None:
                     self.db.files.insert_one({
                         "name": file['name'].strip(" "),
-                        "md5": file['md5']
+                        "md5": file['md5'],
+                        "peers": []
                     })
             except Exception, e:
                 print "initialize_files: " + e.message
@@ -53,21 +54,17 @@ class MongoConnection():
         """
             Restituisce tutti i file
         """
-        cursor = self.db.files.find()
-        return list(cursor)
+        files = self.db.files.find()
+        return list(files)
 
     def get_files(self, query_str):
         """
             Restituisce i file il cui nome comprende la stringa query_str
         """
         regexp = re.compile(query_str, re.IGNORECASE)
-        cursor = self.db.files.find({"name": {"$regex": regexp}})
-        files = []
-        for document in cursor:
-            files.append({
-                "name": document['name'],
-                "md5": document['md5']
-            })
+        files = self.db.files.find({"name": {"$regex": regexp}})
+
+        return list(files)
 
     def share_file(self, session_id, md5, name):
         """
@@ -210,6 +207,10 @@ class MongoConnection():
         cursor = self.db.sessions.find()
         return list(cursor)
 
+    def get_session(self, session_id):
+        session = self.db.sessions.find_one({"session_id": session_id})
+        return session
+
     def insert_session(self, ipv4, ipv6, port):
         """
             Inserisce una nuova sessione, o restitusce il session_id in caso esista già
@@ -234,6 +235,7 @@ class MongoConnection():
                 return session_id
             except Exception as e:
                 print "insert_session: " + e.message
+                return "0000000000000000"
 
     def remove_session(self, session_id):
         """
@@ -279,6 +281,39 @@ class MongoConnection():
         """
         cursor = self.db.file_queries.find()
         return list(cursor)
+
+    def insert_file_query(self, pktId, query_str):
+
+        self.db.file_queries.insert_one({"pktId": pktId,
+                                         "term": query_str,
+                                         })
+
+        # recupero i file disponibili dal database che soddisfano la ricerca
+        files = self.get_files(query_str)
+
+        if files is not None:
+            results = []
+            for file in files:
+                has_peers = file['peers']
+                if has_peers:
+                    peers = []
+                    for peer in file['peers']:
+                        session = self.get_session(peer['session_id'])
+                        if session:
+                            peers.append({"ipv4": session['ipv4'],
+                                          "ipv6": session['ipv6'],
+                                          "port": session['port']})
+
+                    file['peers'] = peers
+                    results.append(file)
+                else:
+                    continue
+
+            self.db.file_queries.update({"pktId": pktId},
+                                        {
+                                            "$set": {"results": results}
+                                        })
+
 
     def get_peer_queries(self):
         """
