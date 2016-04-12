@@ -2,8 +2,7 @@
 from pymongo import MongoClient
 from helpers.helpers import *
 from helpers.ipaddr import *
-from models.file import File
-from models.peer import Peer
+from Client import Peer
 import re
 
 

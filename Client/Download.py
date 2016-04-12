@@ -1,32 +1,10 @@
 # coding=utf-8
-import socket
 import hashlib
-import Connection
+import socket
+
 import helpers
-
-
-def recvall(socket, chunk_size):
-    """
-    Legge dalla socket un certo numero di byte, evitando letture inferiori alla dimensione specificata
-
-    :param socket: socket per le comunicazioni
-    :type socket: object
-    :param chunk_size: lunghezza (numero di byte) di una parte di file
-    :type chunk_size: int
-    :return: dati letti dalla socket
-    :rtype: bytearray
-    """
-
-    data = socket.recv(chunk_size)  # Lettura di chunk_size byte dalla socket
-    actual_length = len(data)
-
-    # Se sono stati letti meno byte di chunk_size continua la lettura finchè non si raggiunge la dimensione specificata
-    while actual_length < chunk_size:
-        new_data = socket.recv(chunk_size - actual_length)
-        actual_length += len(new_data)
-        data += new_data
-
-    return data
+from dbmodules import Connection
+from helpers.helpers import recvall
 
 
 def get_file(session_id, host_ipv4, host_ipv6, host_port, file, directory):

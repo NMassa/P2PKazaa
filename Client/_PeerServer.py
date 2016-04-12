@@ -1,7 +1,7 @@
 # coding=utf-8
 import threading
 import PeerHandler
-import Connection
+import dbmodules.Connection
 import select
 
 
@@ -86,7 +86,7 @@ class PeerServer(threading.Thread):
         Gestisce le connessioni in entrata creando per ognuna un nuovo thread che effettua l'upload del file richiesto
         """
 
-        c = Connection.Connection(self.ps_ipv4, self.ps_ipv6, self.ps_port) # Inizializzazione della socket in ascolto per le richieste degli altri peer
+        c = dbmodules.Connection.Connection(self.ps_ipv4, self.ps_ipv6, self.ps_port) # Inizializzazione della socket in ascolto per le richieste degli altri peer
         c.listen_v4()
         self.ps_socket_v4 = c.socket
         c.listen_v6()

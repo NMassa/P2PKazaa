@@ -1,13 +1,13 @@
 # coding=utf-8
-import os
-
-from Client import Download
-from SharedFile import SharedFile
-from Owner import Owner
 import hashlib
+import os
 import socket
-import Connection
+
 import helpers
+from Client import Download
+from Owner import Owner
+from SharedFile import SharedFile
+from dbmodules import Connection
 
 
 class Peer(object):

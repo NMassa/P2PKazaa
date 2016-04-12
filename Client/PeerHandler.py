@@ -35,22 +35,6 @@ class PeerHandler(threading.Thread):
         self.addr = addr
         self.file_list = file_list
 
-    def filesize(self, n):
-        """
-        Calcola la dimensione del file
-
-        :param n: nome del file
-        :type n: str
-        :return: dimensione del file
-        :rtype: int
-        """
-
-        f = open(n, 'r')
-        f.seek(0, 2)
-        sz = f.tell()
-        f.seek(0, 0)
-        f.close()
-        return sz
 
     def run(self):
         """
