@@ -90,7 +90,7 @@ class Client(threading.Thread):
                                                                    cmd[76:80] + "\t" + cmd[80:82] + "\t" + cmd[82:102])
 
             ttl = cmd[80]
-            # recupero tutti i file che corrispondono al termine di ricerca e gli mando al supernodo che ha fatto la query
+            # recupero tutti i file che corrispondono al termine di ricerca e li mando al supernodo che ha fatto la query
             files = retrieveFiles(cmd[82:102])
 
             sendAckQuery(cmd, files)
@@ -113,7 +113,7 @@ class Client(threading.Thread):
             if loggedIn(cmd[4:20]):
                 sendQuery(cmd[20:40])
 
-            # aspetto 20s che i supernodi interoggati ripondano
+            # aspetto 20s che IL SUPERNODO interrogato
             time.sleep(20)
 
             # se c'è ancora la connessione col peer che ha fatto la ricerca

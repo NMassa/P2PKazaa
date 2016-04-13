@@ -1,9 +1,10 @@
 # coding=utf-8
-from pymongo import MongoClient
-from helpers.helpers import *
-from helpers.ipaddr import *
-from Client import Peer
+import datetime
 import re
+
+from pymongo import MongoClient
+
+from helpers.helpers import *
 
 
 class MongoConnection():
@@ -129,27 +130,28 @@ class MongoConnection():
         """
             Restituisce tutti i vicini
         """
-        cursor = self.db.neighbors.find()
-        return list(cursor)
+        neighbors = self.db.neighbors.find()
 
-    def get_neighbors(self, my_ipv4, my_ipv6):
+        return list(neighbors)
+
+    def get_peers(self):
         """
-            Restituisce un vicino
+            Restituisce solo i peer
         """
-        cursor = self.db.neighbors.find({"ipv4": {"$ne": my_ipv4},
-                                         "ipv6": {"$ne": my_ipv6}
-                                         })
-        neighbors = []
-        for document in cursor:
-            neighbors.append({
-                "ipv4": document['ipv4'],
-                "ipv6": document['ipv6'],
-                "port": document['port']
-            })
+        peers = self.db.neighbors.find({"is_supernode": "false"})
 
-        return neighbors
+        return list(peers)
 
-    def insert_neighbor(self, ipv4, ipv6, port):
+    def get_supernodes(self):
+        """
+            Restituisce solo i supernodi
+            Da utilizzare nella QUER del supernodo
+        """
+        supernodes = self.db.neighbors.find({"is_supernode": "true"})
+
+        return list(supernodes)
+
+    def insert_neighbor(self, ipv4, ipv6, port, is_supernode):
         """
             Inserisce un vicino
         """
@@ -162,8 +164,10 @@ class MongoConnection():
             self.db.neighbors.insert_one({"ipv4": ipv4,
                                           "ipv6": ipv6,
                                           "port": port,
-                                          "is_supernode": "true"
+                                          "is_supernode": is_supernode
                                           })
+        else:
+            print "neighbor already exists"
 
     def remove_neighbor(self, ipv4, ipv6, port):
         """
@@ -293,70 +297,81 @@ class MongoConnection():
         """
             Inserisce la nuova ricerca, aggiungendo subito ai risultati i file già disponibili sul supernodo stesso
         """
-        self.db.file_queries.insert_one({"pktId": pktId,
-                                         "term": query_str,
-                                         })
+        cursor = self.db.file_queries.find_one({"pktId": pktId})
 
-        # recupero i file disponibili dal database che soddisfano la ricerca
-        files = self.get_files(query_str)
+        if cursor is not None:
+            print "query already exists"
+        else:
+            self.db.file_queries.insert_one({"pktId": pktId,
+                                             "term": query_str,
+                                             "timestamp": datetime.datetime.utcnow()
+                                             })
 
-        if files is not None:
-            results = []
-            for file in files:
-                has_peers = file['peers']
-                if has_peers:
-                    peers = []
-                    for peer in file['peers']:  # sostituisco il session_id con i dati veri e proprio del peer
-                        session = self.get_session(peer['session_id'])
-                        if session:
-                            peers.append({"ipv4": session['ipv4'],
-                                          "ipv6": session['ipv6'],
-                                          "port": session['port']})
+            # recupero i file disponibili dal database che soddisfano la ricerca
+            files = self.get_files(query_str)
 
-                    file['peers'] = peers
-                    results.append(file)
-                else:
-                    continue
+            if files is not None:
+                results = []
+                for file in files:
+                    has_peers = file['peers']
+                    if has_peers:
+                        peers = []
+                        for peer in file['peers']:  # sostituisco il session_id con i dati veri e proprio del peer
+                            session = self.get_session(peer['session_id'])
+                            if session:
+                                peers.append({"ipv4": session['ipv4'],
+                                              "ipv6": session['ipv6'],
+                                              "port": session['port']})
 
-            # Aggiorno i risultati della ricerca
-            self.db.file_queries.update({"pktId": pktId},
-                                        {
-                                            "$set": {"results": results}
-                                        })
+                        file['peers'] = peers
+                        results.append(file)
+                    else:
+                        continue
+
+                # Aggiorno i risultati della ricerca
+                self.db.file_queries.update({"pktId": pktId},
+                                            {
+                                                "$set": {"results": results}
+                                            })
 
     def update_file_query(self, pktId, md5, name, ipv4, ipv6, port):
         """
             Aggiorna i risultati di una ricerca inserendo il nuovo peer (dalla risposto alla QUER)
         """
-        query = self.db.file_queries.find_one({"pktId": pktId}) # recuper la ricerca dal database
+        query = self.db.file_queries.find_one({"pktId": pktId})  # recuper la ricerca dal database
         if query is not None:
             results = query['results']
 
-            for file in results:  # cerco il file nei risultati precedenti
-                if file['md5'] == md5:  # se esiste verifico se il nuovo peer è già nella lista
-                    peers = file['peers']
-                    if peers:
-                        found = [peer for peer in peers if peer['ipv4'] == ipv4 or peer['ipv6'] == ipv6] # se è già in lista non lo aggiungo
+            if results:
+                for file in results:  # cerco il file nei risultati precedenti
+                    if file['md5'] == md5:  # se esiste verifico se il nuovo peer è già nella lista
+                        peers = file['peers']
+                        if peers:
+                            found = [peer for peer in peers if peer['ipv4'] == ipv4 or peer['ipv6'] == ipv6] # se è già in lista non lo aggiungo
 
-                        if not found:   # se non esiste lo aggiungo
+                            if not found:   # se non esiste lo aggiungo
+                                peers.append({"ipv4": ipv4,
+                                              "ipv6": ipv6,
+                                              "port": port
+                                              })
+                        else:  # se la lista è vuota la creo
+                            peers = []
                             peers.append({"ipv4": ipv4,
                                           "ipv6": ipv6,
                                           "port": port
                                           })
-                    else:  # se la lista è vuota la creo
-                        peers = []
-                        peers.append({"ipv4": ipv4,
-                                      "ipv6": ipv6,
-                                      "port": port
-                                      })
 
-                    file['peers'] = peers  # aggiorno la lista
+                        file['peers'] = peers  # aggiorno la lista
 
-            # Aggiorno la ricerca
-            self.db.file_queries.update({"pktId": pktId},
-                                        {
-                                            "$set": {"results": results}
-                                        })
+                # Aggiorno la ricerca
+                self.db.file_queries.update({"pktId": pktId},
+                                            {
+                                                "$set": {"results": results}
+                                            })
+            else:
+                print "query got no results"
+        else:
+            print "query not found"
 
     def get_peer_queries(self):
         """
@@ -365,21 +380,79 @@ class MongoConnection():
         peer_queries = self.db.peer_queries.find()
         return list(peer_queries)
 
-    def get_peer_querie(self, pktId):
+    def get_peer_query(self, pktId):
         """
             Restituisce la ricerche di peer associata al pacchetto specificato
         """
         peer_query = self.db.peer_queries.find_one({"pktId": pktId})
         return peer_query
 
-    def inser_peer_query(self, pktId):
+    def insert_peer_query(self, pktId):
         """
             Inserisce la nuova ricerca ...
         """
-        # TODO: implementare
+        cursor = self.db.peer_queries.find_one({"pktId": pktId})
 
-    def update_peer_query(self, pktId, ipv4, ipv6, port):
+        if cursor is not None:
+            print "query already exists"
+        else:
+            self.db.peer_queries.insert_one({"pktId": pktId,
+                                             "timestamp": datetime.datetime.utcnow()
+                                             })
+
+    def update_peer_query(self, pktId, ipv4, ipv6, port, is_supernode):
         """
             Aggiorna i risultati di una ricerca inserendo il nuovo peer (dalla risposto alla QUER)
         """
-        # TODO: implementare
+        query = self.db.peer_queries.find_one({"pktId": pktId})
+
+        if query is not None:
+            peers = query['results']
+            if peers:
+                found = [peer for peer in peers if
+                         peer['ipv4'] == ipv4 or peer['ipv6'] == ipv6]  # se è già in lista non lo aggiungo
+
+                if not found:  # se non esiste lo aggiungo
+                    peers.append({"ipv4": ipv4,
+                                  "ipv6": ipv6,
+                                  "port": port,
+                                  "is_supernode": is_supernode
+                                  })
+            else:  # se la lista è vuota la creo
+                peers = []
+                peers.append({"ipv4": ipv4,
+                              "ipv6": ipv6,
+                              "port": port,
+                              "is_supernode": is_supernode
+                              })
+
+            # Aggiorno la ricerca
+            self.db.peer_queries.update({"pktId": pktId},
+                                        {
+                                            "$set": {"results": peers}
+                                        })
+        else:
+            print "query not found"
+
+    def finalize_peer_query(self, pktId):
+        """
+            Terminata la ricerca dei peer i risultati vengono inseriti nella tabella neighbors e saranno disponibili
+            per le operazioni successive
+        """
+        query = self.db.peer_queries.find_one({"pktId": pktId})
+
+        if query is not None:
+            neighbors = self.get_neighbors()
+
+            results = query['results']
+            if results:
+                for peer in results:
+                    found = [neighbor for neighbor in neighbors if
+                             peer['ipv4'] == neighbor['ipv4'] or peer['ipv6'] == neighbor['ipv6']]  # se è già nella lista dei vicini non lo aggiungo
+
+                    if not found:  # se non esiste lo aggiungo
+                        self.insert_neighbor(peer['ipv4'], peer['ipv6'], peer['port'], peer['is_supernode'])
+            else:
+                print "query got no results"
+        else:
+            print "query not found"

@@ -7,7 +7,7 @@ import helpers
 from Client import Download
 from Owner import Owner
 from SharedFile import SharedFile
-from dbmodules import Connection
+from helpers import connection
 
 
 class Peer(object):
@@ -67,7 +67,7 @@ class Peer(object):
         response_message = None
         try:
             self.directory = None
-            c = Connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port)      # Creazione connessione con la directory
+            c = connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port)      # Creazione connessione con la directory
             c.connect()
             self.directory = c.socket
 

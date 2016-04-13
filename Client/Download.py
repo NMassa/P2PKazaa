@@ -3,7 +3,7 @@ import hashlib
 import socket
 
 import helpers
-from dbmodules import Connection
+from helpers import connection
 from helpers.helpers import recvall
 
 
@@ -25,7 +25,7 @@ def get_file(session_id, host_ipv4, host_ipv6, host_port, file, directory):
     :type directory: object
     """
 
-    c = Connection.Connection(host_ipv4, host_ipv6, host_port)                      # Inizializzazione della connessione verso il peer
+    c = connection.Connection(host_ipv4, host_ipv6, host_port)                      # Inizializzazione della connessione verso il peer
     c.connect()
     download = c.socket
 

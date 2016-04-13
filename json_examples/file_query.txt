@@ -7,6 +7,7 @@ Per ogni file l'array "peers" rappresenta la lista dei peer che l'ha condiviso
     "_id" : ObjectId("570cffc1482e024a20aaad7c"),
     "term" : "on",
     "pktId" : "IHOIFTYUHYFTGJHYGFT",
+    "timestamp": "13-04-2016 10.07.48",
     "results" : [
         {
             "name" : "scheva-buffon.jpg",
