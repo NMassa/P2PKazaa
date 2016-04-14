@@ -10,11 +10,8 @@ from commandFile import *
 my_ipv4 = "172.030.008.004"
 my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0004"
 my_port = "00080"
-
-def output(lock, message):
-    lock.acquire()
-    print message
-    lock.release()
+my_peer_port = "06000"
+TTL = '04'
 
 class Client(threading.Thread):
     def __init__(self, (client, address), dbConnect, output_lock):
@@ -30,7 +27,7 @@ class Client(threading.Thread):
         cmd = conn.recv(self.size)
 
         if cmd[:4] == 'SUPE':
-            #“SUPE”[4B].Pktid[16B].IPP2P[39B].PP2P[5B].TTL[2B]
+            #“SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
             #“ASUP”[4B].Pktid[16B].IPP2P[39B].PP2P[5B]
             pass
             """
@@ -44,88 +41,150 @@ class Client(threading.Thread):
             """
 
         elif cmd[:4] == 'LOGI':
-            #“LOGI”[4B].IPP2P[39B].PP2P[5B]
+            #“LOGI”[4B].IPP2P[55B].PP2P[5B]
             #“ALGI”[4B].SessionID[16B]
+            ipv4 = cmd[4:19]
+            ipv6 = cmd[20:59]
+            port = cmd[59:64]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock,
-                   cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:35] + "\t" + cmd[36:75] + "\t" + cmd[75:80])
+            output(self.output_lock, cmd[:4] + '\t' + ipv4 + '\t' + ipv6 + '\t' + port)
 
-            sessionId = logon(cmd)
+            sessionId = self.dbConnect.insert_session(ipv4, ipv6, port)
 
             msg = 'ALGI' + sessionId
-
-            sendAckLogon(msg)
+            # funziona solo se il mantiene la connessione
+            conn.send(msg)
 
 
         elif cmd[:4] == 'ADFF':
-            #“ADFF”[4B].SessionID[16B].Filemd5[16B].Filename[100B]
+            #“ADFF”[4B].SessionID[16B].Filemd5[32B].Filename[100B]
+            sessId = cmd[4:20]
+            md5 = cmd[20:52]
+            fname = cmd[52:152]
             output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:52] + "\t" + cmd[52:102])
+            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + md5 + "\t" + fname)
 
-            addFile(cmd)
+            self.dbConnect.share_file(sessId, md5, fname)
 
         elif cmd[:4] == 'DEFF':
-            #“DEFF”[4B].SessionID[16B].Filemd5[16B]
+            #“DEFF”[4B].SessionID[16B].Filemd5[32B]
+            sessId = cmd[4:20]
+            md5 = cmd[20:52]
             output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:52])
+            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + md5)
 
-            removeFile(cmd)
+            self.dbConnect.remove_file(sessId, md5)
 
         elif cmd[:4] == 'LOGO':
             #“LOGO”[4B].SessionID[16B]
             #“ALGO”[4B].#delete[3B]
+            sessId = cmd[4:20]
             output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20])
+            output(self.output_lock, cmd[0:4] + "\t" + sessId)
 
-            delete = logout(cmd)
+            delete = self.dbConnect.remove_session(sessId)
 
-            msg = 'ALGO' + delete
+            msg = 'ALGO' + str(delete).zfill(3)
 
-            sendAckLogout(msg)
+            conn.send(msg)
 
         elif cmd[:4] == 'QUER':
-            #“QUER”[4B].Pktid[16B].IPP2P[39B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
+            #“QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            ttl = cmd[80:82]
+            searchStr = cmd[82:102]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:35] + "\t" + cmd[36:75] + "\t" +
-                                                                   cmd[76:80] + "\t" + cmd[80:82] + "\t" + cmd[82:102])
+            output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                                                                   port + "\t" + ttl + "\t" + searchStr)
 
-            ttl = cmd[80]
-            # recupero tutti i file che corrispondono al termine di ricerca e li mando al supernodo che ha fatto la query
-            files = retrieveFiles(cmd[82:102])
+            # aggiungere return True/False in dbconnection.py
+            visited = self.dbConnect.insert_packet(pktId)
+            if ttl >= 1 and visited:
+                files = self.dbConnect.get_files(searchStr)
+                if files is not None:
+                    msg = 'AQUE' + pktId
+                    for file in files:
+                        if len(file['peers']) > 0:
+                            for peer in file['peers']:
+                                msgComplete = msg + peer['ipv4'] + '|' + peer['ipv6'] + peer['port'] + file['md5'] + file['name']
+                                sendTo(ipv4, ipv6, port, msgComplete)
 
-            sendAckQuery(cmd, files)
+            if ttl > 1 and visited:
+                ttl -= 1
+                supernodes = self.dbConnect.get_supernodes()
+
+                if(len(supernodes) > 0):
+                    #“QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
+
+                    msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + ttl + searchStr
+                    for supern in enumerate(supernodes):
+                        sendTo(supern['ipv4'], supern['ipv6'], supern['port'], msg)
+
+
 
         elif cmd[:4] == 'AQUE':
-            #“AQUE”[4B].Pktid[16B].IPP2P[39B].PP2P[5B].Filemd5[16B].Filename[100B]     ricevo solo dai supernodi
+            #“AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            md5 = cmd[80:102]
+            fname = cmd[102:202]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:35] + "\t" + cmd[36:75] + "\t" +
-                                                                   cmd[76:80] + "\t" + cmd[80:102] + "\t" + cmd[102:202])
+            output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                                                                   port + "\t" + md5 + "\t" + fname)
 
-            insertAckQuery(cmd)
+            self.dbConnect.update_file_query( pktId, md5, fname, ipv4, ipv6, port)
 
         elif cmd[:4] == 'FIND':
-            #“FIND”[4B].SessionID[16B].Ricerca[20B]                                    ricevo dai peer loggati
-            #“AFIN”[4B].#idmd5[3B].{Filemd5_i[16B].Filename_i[100B].#copy_i[3B].
-            #{IPP2P_i_j[39B].PP2P_i_j[5B]}(j=1..#copy_i)}(i=1..#idmd5)                 mando ai peer loggati
+            #“FIND”[4B].SessionID[16B].Ricerca[20B]                                         ricevo dai peer loggati
+            #“AFIN”[4B].#idmd5[3B].{Filemd5_i[32B].Filename_i[100B].#copy_i[3B].
+            #{IPP2P_i_j[55B].PP2P_i_j[5B]}(j=1..#copy_i)}(i=1..#idmd5)                       mando ai peer loggati
+
+            sessId = cmd[4:20]
+            searchStr = cmd[20:40]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock, cmd[0:4] + "\t" + cmd[4:20] + "\t" + cmd[20:40])
+            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + searchStr)
 
-            if loggedIn(cmd[4:20]):
-                sendQuery(cmd[20:40])
+            if self.dbConnect.get_session(sessId) is not None:
+                pktId = id_generator(16)
+                self.dbConnect.insert_file_query(pktId, searchStr)
+                supernodes = self.dbConnect.get_supernodes()
 
-            # aspetto 20s che IL SUPERNODO interrogato
-            time.sleep(20)
+                if(len(supernodes) > 0):
+                    #“QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
 
-            # se c'è ancora la connessione col peer che ha fatto la ricerca
-            sendAckFind(cmd)
+                    msg = 'QUER' + pktId + my_ipv4 + '|' + my_ipv6 + my_port + TTL + searchStr
+                    for supern in enumerate(supernodes):
+                        sendTo(supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
+                    # aspetto per 20s le risposte dei supernodi
+                    time.sleep(20)
+
+                listResults = list(self.dbConnect.get_file_query(pktId)['results'])
+
+                if listResults is not None:
+                    numMd5 = str(len(listResults)).zfill(3)
+                    msg = 'AFIN' + numMd5
+                    for file in listResults:
+                        msg += file['md5'] + file['name'].ljust(100) + str(len(file['peers'])).zfill(3)
+                        for peer in file['peers']:
+                            msg += peer['ipv4'] + '|' + peer['ipv6'] + peer['port']
+
+                    conn.send(msg)
+
+                else:
+                    conn.send('AFIN000')
 
 
 class Server(threading.Thread):
     def __init__(self):
         super(Server, self).__init__()
         self.host = ''
-        self.port = 6000
+        self.port = 80
         self.backlog = 5
         self.size = 1024
         self.server = None

@@ -1,51 +1,37 @@
 # coding=utf-8
+import sys, socket, random, string
+from helpers.connection import Connection
 
-def sendAckSuper(msg):
-    pass
 
-def sendAckLogon(msg):
-    pass
+def sendTo(output_lock, ipv4, ipv6, port, msg):
 
-def sendAckLogout():
-    pass
+    # Non invio all'indirizzo da cui è arrivato il pacchetto
+    # if sender is None or (peer['ipv4'] != sender and peer['ipv6'] != sender):
+    try:
+        output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
 
-def sendAckQuery(files):
-    #“AQUE”[4B].Pktid[16B].IPP2P[39B].PP2P[5B].Filemd5[16B].Filename[100B]     ricevo solo dai supernodi
-    pass
+        c = Connection(output_lock, ipv4, ipv6, port)
+        c.connect()
+        peerSock = c.socket
 
-def sendQuery(searchStr):
-    pass
+        peerSock.send(msg)
 
-def sendAckFind(cmd):
-    pass
+        output(output_lock, "\nMessage sent : ")
+        output(output_lock, msg)
 
-"""funzioni della classe di conessione al Data Base"""
+        peerSock.close()
+    except IOError as e:
+        output(output_lock, 'send_near-Socket Error: ' + e.message)
+    except socket.error, msg:
+        output(output_lock, 'send_near-Socket Error: ' + str(msg))
 
-def logon(cmd):
-    if True:
-        return 'nwienfo2i3432o34ij'
-    else:
-        return '0000000000000000'
+    except Exception as e:
+        output(output_lock, 'send_near-Error: ' + e.message)
 
-def addFile(cmd):
-    pass
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
-def removeFile(cmd):
-    pass
-
-def logout(cmd):
-    delete = 5
-    return str(5).zfill(3)
-
-def retrieveFiles(searchStr):
-    files = []
-    return list(files)
-
-def insertAckQuery(cmd):
-    pass
-
-def loggedIn():
-    return True
-
-""""""
-
+def output(lock, message):
+    lock.acquire()
+    print message
+    lock.release()
