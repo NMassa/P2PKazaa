@@ -1,7 +1,7 @@
 # coding=utf-8
 from Client import Peer
 import sys
-from Client import _PeerServer
+from Client import PeerServer
 from Client import Server
 
 # main
@@ -41,7 +41,7 @@ while p.session_id is None:
             server.start()
             # Inizializzazione del server supernodo multithread che risponde alle richieste di download
             # del supernodo peer
-            peer_sn_server = _PeerServer.PeerServer(p.my_ipv4, p.my_ipv6, p.my_port, p.files_list)
+            peer_sn_server = PeerServer.PeerServer(p.my_ipv4, p.my_ipv6, p.my_port, p.files_list)
             peer_sn_server.start()
         else:
             break
@@ -53,7 +53,7 @@ while p.session_id is None:
             server = Server.server()
             server.start()
             # Inizializzazione del server multithread che risponde alle richieste di download
-            peerserver = _PeerServer.PeerServer(p.my_ipv4, p.my_ipv6, p.my_port, p.files_list)
+            peerserver = PeerServer.PeerServer(p.my_ipv4, p.my_ipv6, p.my_port, p.files_list)
             peerserver.start()
         else:
             break

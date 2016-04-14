@@ -36,10 +36,10 @@ class Peer(object):
 
     my_ipv4 = "127.000.000.001"
     my_ipv6 = "::1"
-    my_port = "03000"
-    dir_ipv4 = "127.000.000.001"
+    my_port = "06000"
+    dir_ipv4 = "127.000.000.002"
     dir_ipv6 = "::1"
-    dir_port = "06000"
+    dir_port = "03000"
 
     files_list = []
     directory = None
