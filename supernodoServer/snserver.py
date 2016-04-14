@@ -1,5 +1,5 @@
 # coding=utf-8
-import socket, json, os, hashlib, select, sys, time
+import socket, os, hashlib, select, sys, time
 sys.path.insert(1,'/home/andrei/PycharmProjects/P2PKazaa')
 from random import randint
 import threading
