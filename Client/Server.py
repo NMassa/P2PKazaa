@@ -75,6 +75,7 @@ class Client(threading.Thread):
                 result = "0000000000000000"
             response = 'ALGI' + result
             conn.sendall(response)
+            print "AlGI was send!"
 
         #"LOGOQGF0A8WPRA2XRFZ0"
         elif cmd == 'LOGO':
