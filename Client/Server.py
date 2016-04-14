@@ -15,7 +15,7 @@ class Server(threading.Thread):
     def __init__(self):
         super(Server, self).__init__()
         self.host = ''
-        self.port = 6000
+        self.port = 3000
         self.backlog = 5
         self.size = 1024
         self.server = None
