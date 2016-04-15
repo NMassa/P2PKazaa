@@ -11,7 +11,6 @@ from helpers import connection
 
 
 class Peer(object):
-
     """
     Rappresenta il peer corrente
 
