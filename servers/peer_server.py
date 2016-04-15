@@ -51,7 +51,7 @@ class Peer_Server(threading.Thread):
             # “ADFF”[4B].SessionID[16B].Filemd5[32B].Filename[100B]
             sessId = cmd[4:20]
             md5 = cmd[20:52]
-            fname = cmd[52:152]
+            fname = cmd[52:152].strip(" ")
             output(self.output_lock, "\nMessagge received: " + cmd)
             output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + md5 + "\t" + fname)
 
