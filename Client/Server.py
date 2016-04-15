@@ -120,3 +120,5 @@ class Client(threading.Thread):
             dbconnection.remove_file(session_id, md5)
 
 
+s = Server()
+s.start()

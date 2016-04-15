@@ -1,6 +1,8 @@
 # coding=utf-8
 import datetime
 import re
+import sys
+sys.path.insert(1,'/home/massa/Documenti/PycharmProjects/P2PKazaa')
 
 from pymongo import MongoClient
 
@@ -35,6 +37,7 @@ class MongoConnection():
                     self.db.files.insert_one({
                         "name": file['name'].strip(" "),
                         "md5": file['md5'],
+                        "mine": "true",
                         "peers": []
                     })
             except Exception, e:
@@ -56,6 +59,13 @@ class MongoConnection():
             Restituisce tutti i file
         """
         files = self.db.files.find()
+        return list(files)
+
+    def get_my_files(self):
+        """
+            Restituisce i file condivisi dal peer corrente
+        """
+        files = self.db.files.find({"mine": "true"})
         return list(files)
 
     def get_files(self, query_str):
@@ -219,11 +229,11 @@ class MongoConnection():
         """
             Inserisce una nuova sessione, o restitusce il session_id in caso esista già
         """
-        cursor = self.db.sessions.find({"ipv4": ipv4,
+        cursor = self.db.sessions.find_one({"ipv4": ipv4,
                                         "ipv6": ipv6,
                                         "port": port
                                         })
-        if cursor.count() is not None:
+        if cursor is not None:
             # TODO: modificare print
             print "already logged in"
             # Restituisco il session id esistente come da specifiche

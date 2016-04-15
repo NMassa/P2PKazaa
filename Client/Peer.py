@@ -27,19 +27,19 @@ class Peer(object):
         directory: connessione alla directory
     """
     session_id = None
-    '''my_ipv4 = "172.030.008.003"
-    my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0003"
+    my_ipv4 = "172.030.008.002"
+    my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0002"
     my_port = "06000"
     dir_ipv4 = "172.030.001.001"
     dir_ipv6 = "fc00:0000:0000:0000:0000:0000:0001:0001"
-    dir_port = "03000"'''
-
-    my_ipv4 = "127.000.000.001"
-    my_ipv6 = "::1"
-    my_port = "06000"
-    dir_ipv4 = "127.000.000.002"
-    dir_ipv6 = "::1"
     dir_port = "03000"
+
+    #my_ipv4 = "127.000.000.001"
+    #my_ipv6 = "::1"
+    #my_port = "06000"
+    #dir_ipv4 = "127.000.000.002"
+    #dir_ipv6 = "::1"
+    #dir_port = "03000"
 
     files_list = []
     directory = None

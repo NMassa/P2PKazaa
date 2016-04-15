@@ -1,20 +1,21 @@
 # coding=utf-8
 from Client import Peer
-import sys
-from Client import PeerServer
-from Client import Server
 
 # main
 # Inizializzazione del peer
-from supernodoServer import snserver
+from servers import multithread_server
+
+
+# Avvio il server in ascolto sulle porte 80 e 6000
+server = multithread_server.Server()
+server.start()
 
 p = Peer.Peer()
 
 while p.session_id is None:
-    print 'Select one of the following options (\'e\' to exit):'
-    print 'Do you want to make the supernode?'
-    print '1 -> YES'
-    print '2 -> NO'
+    print 'Are you a supernode?'
+    print '1: YES'
+    print '2: NO'
 
     int_choice = None
     while int_choice is None:
@@ -24,7 +25,7 @@ while p.session_id is None:
             option = None
 
         if option is None:
-            print 'Please select YES or NO'
+            print 'Please select an option'
         else:
             try:
                 int_choice = int(option)

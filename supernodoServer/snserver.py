@@ -1,14 +1,14 @@
 # coding=utf-8
 import socket, os, hashlib, select, sys, time
-sys.path.insert(1,'/home/andrei/PycharmProjects/P2PKazaa')
+sys.path.insert(1,'/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from random import randint
 import threading
 from dbmodules.dbconnection import *
 from commandFile import *
 
 
-my_ipv4 = "172.030.008.004"
-my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0004"
+my_ipv4 = "172.030.008.002"
+my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0002"
 my_port = "00080"
 my_peer_port = "06000"
 TTL = '04'
