@@ -11,6 +11,7 @@ def hashfile(file, hasher, blocksize=65536):
         buf = file.read(blocksize)
     return hasher.hexdigest()
 
+
 def get_shareable_files():
     files_list = []
 
@@ -24,8 +25,10 @@ def get_shareable_files():
 
     return files_list
 
+
 def id_generator(size, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
 
 def recvall(socket, chunk_size):
     """
@@ -50,6 +53,7 @@ def recvall(socket, chunk_size):
 
     return data
 
+
 def filesize(self, n):
         """
         Calcola la dimensione del file
@@ -67,3 +71,33 @@ def filesize(self, n):
         f.close()
         return sz
 
+
+def print_menu_top(lock):
+    lock.acquire()
+    print "########################################################"
+    print "##                                                    ##"
+    print "## |  \  /  \                                         ##\n" + \
+          "## | $$ /  $$  ______   ________   ______    ______   ##\n" + \
+          "## | $$/  $$  |      \ |        \ |      \  |      \  ##\n" + \
+          "## | $$  $$    \$$$$$$\ \$$$$$$$$  \$$$$$$\  \$$$$$$\ ##\n" + \
+          "## | $$$$$\   /      $$  /    $$  /      $$ /      $$ ##\n" + \
+          "## | $$ \$$\ |  $$$$$$$ /  $$$$_ |  $$$$$$$|  $$$$$$$ ##\n" + \
+          "## | $$  \$$\ \$$    $$|  $$    \ \$$    $$ \$$    $$ ##\n" + \
+          "## \$$   \$$  \$$$$$$$ \$$$$$$$$  \$$$$$$$  \$$$$$$$  ##"
+    print "##                                                    ##"
+    print "########################################################"
+    print "##                                                    ##"
+    lock.release()
+
+
+def print_menu_bottom(lock):
+    lock.acquire()
+    print "##                                                    ##"
+    print "########################################################"
+    lock.release()
+
+
+def output(lock, message):
+    lock.acquire()
+    print message
+    lock.release()

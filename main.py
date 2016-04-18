@@ -1,7 +1,9 @@
 # coding=utf-8
+import threading
 from Client.Peer import Peer
 from servers import multithread_server
 from dbmodules.dbconnection import *
+from helpers.helpers import *
 import config
 
 supernode_mode = False
@@ -12,9 +14,11 @@ server.start()
 
 db = MongoConnection()
 
-print 'Are you a supernode?'
-print '1: YES'
-print '2: NO'
+out_lck = threading.Lock()
+
+output(out_lck, "Are you a supernode?")
+output(out_lck, "1: YES")
+output(out_lck, "2: NO")
 
 int_choice = None
 while int_choice is None:
@@ -24,25 +28,27 @@ while int_choice is None:
         option = None
 
     if option is None:
-        print 'Please select an option'
+        output(out_lck, "Please select an option")
     else:
         try:
             int_choice = int(option)
         except ValueError:
-            print "A choice is required"
+            output(out_lck, "A choice is required")
 
 
 if int_choice == 1:
-    print "YOU ARE A SUPERNODE"         # sei un supernodo
+    output(out_lck, "YOU ARE A SUPERNODE")
     supernode_mode = True
 else:
-    print "YOU ARE A PEER!"          # sei un peer
+    output(out_lck, "YOU ARE A PEER!")
 
 p = Peer()
 
 while True:
-    print "Select one of the following options ('e' to exit):"
-    print "1: Search supernodes"
+    print_menu_top(out_lck)
+    output(out_lck, "## Select one of the following options ('e' to exit): ##")
+    output(out_lck, "## 1: Search supernodes                               ##")
+    print_menu_bottom(out_lck)
 
     int_option = None
     while int_option is None:
@@ -52,19 +58,19 @@ while True:
             option = None
 
         if option is None:
-            print 'Please select an option'
+            output(out_lck, "Please select an option")
         elif option == 'e':
-            print 'Bye bye'
+            output(out_lck, "Bye bye")
             server.stop()
             sys.exit()  # Interrompo l'esecuzione
         else:
             try:
                 int_option = int(option)
             except ValueError:
-                print "A number is required"
+                output(out_lck, "A number is required")
 
     if int_option != 1:
-        print 'Option ' + str(option) + ' not available'
+        output(out_lck, "Option " + str(option) + " not available")
     else:
         # TODO: ricerca dei supernodi tramite i vicini nella tabella neighbor, i supernodi vanno salvati nella tabella neighbor con is_supernode = true
 
@@ -74,11 +80,13 @@ while True:
 
         if supernode_mode:
             while True:
-                print "Select one of the following options ('e' to exit):"
-                print "1: Search supernodes"
-                print "2: Add file (to myself)"
-                print "3: Delete file (from myself)"
-                print "4: Search file"
+                print_menu_top(out_lck)
+                output(out_lck, "## Select one of the following options ('e' to exit): ##")
+                output(out_lck, "## 1: Search supernodes                               ##")
+                output(out_lck, "## 2: Add file (to myself)                            ##")
+                output(out_lck, "## 3: Delete file (from myself)                       ##")
+                output(out_lck, "## 4: Search file                                     ##")
+                print_menu_bottom(out_lck)
 
                 int_option = None
                 try:
@@ -87,16 +95,16 @@ while True:
                     option = None
 
                 if option is None:
-                    print 'Please select an option'
+                    output(out_lck, "Please select an option")
                 elif option == 'e':
-                    print 'Bye bye'
+                    output(out_lck, "Bye bye")
                     server.stop()
                     sys.exit()  # Interrompo l'esecuzione
                 else:
                     try:
                         int_option = int(option)
                     except ValueError:
-                        print "A number is required"
+                        output(out_lck, "A number is required")
                     else:
                         if int_option == 1:
                             # ricerca supernodi e salvataggio nel db
@@ -115,9 +123,9 @@ while True:
 
                             not_done = True
                             while not_done:
-                                print "Select one of the following options ('e' to exit):"
-                                print "1: View query results"
-                                print "2: Download"
+                                output(out_lck, "Select one of the following options ('e' to exit):")
+                                output(out_lck, "1: View query results")
+                                output(out_lck, "2: Download")
 
                                 int_option = None
                                 try:
@@ -126,16 +134,16 @@ while True:
                                     option = None
 
                                 if option is None:
-                                    print 'Please select an option'
+                                    output(out_lck, "Please select an option")
                                 elif option == 'e':
-                                    print 'Bye bye'
+                                    output(out_lck, "Bye bye")
                                     server.stop()
                                     sys.exit()  # Interrompo l'esecuzione
                                 else:
                                     try:
                                         int_option = int(option)
                                     except ValueError:
-                                        print "A number is required"
+                                        output(out_lck, "A number is required")
                                     else:
                                         if int_option == 1:
                                             # stampo a video i risultati della ricerca
@@ -148,17 +156,17 @@ while True:
                                             not_done = False
 
                                         else:
-                                            print 'Option ' + str(int_option) + ' not available'
+                                            output(out_lck, "Option " + str(int_option) + " not available")
 
                         else:
-                            print 'Option ' + str(int_option) + ' not available'
+                            output(out_lck, "Option " + str(int_option) + " not available")
 
 
 
         else:
             # se trovo almeno un supernodo faccio scegliere quale utilizzare per fare il login
-            print "Select a supernode to log in:"
-            print "lista supernodi"
+            output(out_lck, "Select a supernode to log in:")
+            output(out_lck, "lista supernodi")
 
             int_option = None
             while int_option is None:
@@ -168,12 +176,12 @@ while True:
                     option = None
 
                 if option is None:
-                    print 'Please select an option'
+                    output(out_lck, "Please select an option")
                 else:
                     try:
                         int_option = int(option)
                     except ValueError:
-                        print "A number is required"
+                        output(out_lck, "A number is required")
                     else:
                         #TODO: impostare l'indirizzo del supernodo che fa da directory
                         p.dir_ipv4 = ""
@@ -185,11 +193,13 @@ while True:
                         p.session_id = "269d4afsfdaf645as1"
 
                         while p.session_id is not None:
-                            print "Select one of the following options:"
-                            print "1: Add file"
-                            print "2: Delete file"
-                            print "3: Search file"
-                            print "4: Log out"
+                            print_menu_top(out_lck)
+                            output(out_lck, "## Select one of the following options:               ##")
+                            output(out_lck, "## 1: Add file                                        ##")
+                            output(out_lck, "## 2: Delete file                                     ##")
+                            output(out_lck, "## 3: Search file                                     ##")
+                            output(out_lck, "## 4: Log out and exit                                ##")
+                            print_menu_bottom(out_lck)
 
                             int_option = None
                             try:
@@ -198,12 +208,12 @@ while True:
                                 option = None
 
                             if option is None:
-                                print 'Please select an option'
+                                output(out_lck, "Please select an option")
                             else:
                                 try:
                                     int_option = int(option)
                                 except ValueError:
-                                    print "A number is required"
+                                    output(out_lck, "A number is required")
                                 else:
                                     if int_option == 1:
                                         # scelgo un file dalla cartella e lo aggiungo alla directory
@@ -221,9 +231,9 @@ while True:
 
                                         not_done = True
                                         while not_done:
-                                            print "Select one of the following options ('e' to exit):"
-                                            print "1: View query results"
-                                            print "2: Download"
+                                            output(out_lck, "Select one of the following options ('e' to exit):")
+                                            output(out_lck, "1: View query results")
+                                            output(out_lck, "2: Download")
 
                                             int_option = None
                                             try:
@@ -232,14 +242,14 @@ while True:
                                                 option = None
 
                                             if option is None:
-                                                print 'Please select an option'
+                                                output(out_lck, "Please select an option")
                                             elif option == 'e':
                                                 break
                                             else:
                                                 try:
                                                     int_option = int(option)
                                                 except ValueError:
-                                                    print "A number is required"
+                                                    output(out_lck, "A number is required")
 
                                                 if int_option == 1:
                                                     # stampo a video i risultati della ricerca
@@ -250,67 +260,13 @@ while True:
 
                                                     not_done = False
                                                 else:
-                                                    print 'Option ' + str(int_option) + ' not available'
+                                                    output(out_lck, "Option " + str(int_option) + " not available")
                                     elif int_option == 4:
                                         print "logging out"
                                         p.session_id = None
 
                                     else:
-                                        print 'Option ' + str(int_option) + ' not available'
+                                        output(out_lck, "Option " + str(int_option) + " not available")
 
-        # int_option = None
-        # while int_option is None:
-        #     try:
-        #         option = raw_input()
-        #     except SyntaxError:
-        #         option = None
-        #
-        #     if option is None:
-        #         print 'Please select an option'
-        #     elif option == 'e':
-        #         print 'Bye bye'
-        #         server.stop()
-        #         sys.exit()  # Interrompo l'esecuzione
-        #     else:
-        #         try:
-        #             int_option = int(option)
-        #         except ValueError:
-        #             print "A number is required"
-        #
-        #
-        # while p.session_id is not None:     # Utente loggato
-        #     print "\nSelect one of the following options:"
-        #     print "1: Add File"
-        #     print "2: Remove File"
-        #     print "3: Search File"
-        #     print "4: LogOut"
-        #
-        #     int_option = None
-        #     while int_option is None:
-        #         try:
-        #             option = raw_input()    # Input da tastiera
-        #         except SyntaxError:
-        #             option = None
-        #
-        #         if option is None:
-        #             print 'Please select an option'
-        #         else:
-        #             try:
-        #                 int_option = int(option)
-        #             except ValueError:
-        #                 print "A number is required"
-        #
-        #     if int_option == 1:
-        #         p.share()           # Aggiunta di un file alla directory
-        #     elif int_option == 2:
-        #         p.remove()          # Rimozione di un file dalla directory
-        #     elif int_option == 3:
-        #         p.search()          # Ricerca ed eventuale download di un file
-        #     elif int_option == 4:
-        #         p.logout()          # Logout
-        #         peerserver.stop()   # Terminazione del server multithread che risponde alle richieste di download
-        #         sys.exit()          # Interrompo l'esecuzione
-        #     else:
-        #         print 'Option ' + str(int_option) + ' not available'
 
 

@@ -71,8 +71,8 @@ class Server(threading.Thread):
 
         self.running = 0
 
-        for c in self.threads:
-            c.join()
-
         for item in self.sock_lst:
             item.close()
+
+        for c in self.threads:
+            c.join()
