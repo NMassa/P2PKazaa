@@ -4,10 +4,10 @@ import socket, os, hashlib, select, sys, time
 sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from sn_server import *
 from peer_server import *
-
+import config
 
 class Server(threading.Thread):
-    def __init__(self):
+    def __init__(self, is_supernode):
         threading.Thread.__init__(self)
         self.host = ''
         self.port_super = 6000
@@ -20,6 +20,7 @@ class Server(threading.Thread):
         self.running = None
         self.output_lock = threading.Lock()
         self.dbConnect = MongoConnection()
+        self.is_supernode = is_supernode
 
     def run(self):
 
@@ -50,7 +51,8 @@ class Server(threading.Thread):
 
                             try:
                                 # handle the server socket
-                                c = Peer_Server(item.accept(), self.dbConnect, self.output_lock)
+                                c = Peer_Server(item.accept(), self.dbConnect, self.output_lock, config.my_ipv4,
+                                                config.my_ipv6, config.my_port, config.ttl, self.is_supernode)
                                 c.start()
                                 self.threads.append(c)
                             except Exception as e:
@@ -60,7 +62,8 @@ class Server(threading.Thread):
 
                             try:
                                 # handle the server socket
-                                c = SN_Server(item.accept(), self.dbConnect, self.output_lock)
+                                c = SN_Server(item.accept(), self.dbConnect, self.output_lock, config.my_ipv4,
+                                                config.my_ipv6, config.my_port, config.ttl, self.is_supernode)
                                 c.start()
                                 self.threads.append(c)
                             except Exception as e:

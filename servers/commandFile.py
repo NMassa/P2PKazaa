@@ -6,7 +6,6 @@ from helpers.connection import Connection
 def sendTo(output_lock, ipv4, ipv6, port, msg):
 
     # Non invio all'indirizzo da cui è arrivato il pacchetto
-    # if sender is None or (peer['ipv4'] != sender and peer['ipv6'] != sender):
     try:
         output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
 

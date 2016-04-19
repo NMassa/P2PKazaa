@@ -7,25 +7,24 @@ import threading
 from dbmodules.dbconnection import *
 from commandFile import *
 
-my_ipv4 = "172.030.008.002"
-my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0002"
-my_port = "00080"
-my_peer_port = "06000"
-TTL = '04'
-
 
 class Peer_Server(threading.Thread):
     """
         Gestisce le comunicazioni con i peer: LOGI, LOGO, ADDF, DELF, FIND
     """
 
-    def __init__(self, (client, address), dbConnect, output_lock):
+    def __init__(self, (client, address), dbConnect, output_lock, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
         threading.Thread.__init__(self)
         self.client = client
         self.address = address
         self.size = 1024
         self.dbConnect = dbConnect
         self.output_lock = output_lock
+        self.my_ipv4 = my_ipv4
+        self.my_ipv6 = my_ipv6
+        self.my_port = my_port
+        self.ttl = ttl
+        self.is_supernode = is_supernode
 
     def run(self):
         conn = self.client
@@ -43,9 +42,8 @@ class Peer_Server(threading.Thread):
             sessionId = self.dbConnect.insert_session(ipv4, ipv6, port)
 
             msg = 'ALGI' + sessionId
-            # funziona solo se il mantiene la connessione
+            # funziona solo se il peer mantiene la connessione
             conn.send(msg)
-
 
         elif cmd[:4] == 'ADFF':
             # “ADFF”[4B].SessionID[16B].Filemd5[32B].Filename[100B]
@@ -97,7 +95,7 @@ class Peer_Server(threading.Thread):
                 if (len(supernodes) > 0):
                     # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
 
-                    msg = 'QUER' + pktId + my_ipv4 + '|' + my_ipv6 + my_port + TTL + searchStr
+                    msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port + str(self.ttl) + searchStr
                     for supern in enumerate(supernodes):
                         sendTo(supern['ipv4'], supern['ipv6'], supern['port'], msg)
 

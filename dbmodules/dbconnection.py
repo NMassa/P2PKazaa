@@ -178,6 +178,15 @@ class MongoConnection():
                                           })
         else:
             print "neighbor already exists"
+            print "updating existing neighbor"
+
+            self.db.neighbors.update({"$or": [{"ipv4": ipv4},
+                                              {"ipv6": ipv6}]
+                                      },
+                                        {
+                                            "$set": {"is_supernode": is_supernode}
+                                        })
+
 
     def remove_neighbor(self, ipv4, ipv6, port):
         """
@@ -208,9 +217,11 @@ class MongoConnection():
         if cursor is not None:
             # TODO: modificare print
             print "already visited"
+            return True
         else:
             try:
                 self.db.packets.insert_one({"pktId": pktId})
+                return False
             except Exception as e:
                 print "insert_packet: " + e.message
 

@@ -6,9 +6,12 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+import random
+import sys
+import time
 from PyQt4 import QtCore, QtGui
-import sys, time, random
-import main_window as MainWindow
+
+from GUI import main_window as MainWindow
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -26,14 +29,14 @@ except AttributeError:
 
 
 class MyThread(QtCore.QThread):
-    print_trigger = QtCore.pyqtSignal(str)
+    print_trigger = QtCore.pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         super(MyThread, self).__init__(parent)
 
     def run(self):
         time.sleep(random.random()*5)  # random sleep to imitate working
-        self.print_trigger.emit("prova")
+        self.print_trigger.emit("prova", "mannaggia")
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

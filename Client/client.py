@@ -8,9 +8,10 @@ from Client import Download
 from Owner import Owner
 from SharedFile import SharedFile
 from helpers import connection
+from helpers.helpers import *
 
 
-class Peer(object):
+class Client(object):
     """
     Rappresenta il peer corrente
 
@@ -26,27 +27,22 @@ class Peer(object):
         directory: connessione alla directory
     """
     session_id = None
-    my_ipv4 = "172.030.008.002"
-    my_ipv6 = "fc00:0000:0000:0000:0000:0000:0008:0002"
-    my_port = "06000"
-    dir_ipv4 = "172.030.001.001"
-    dir_ipv6 = "fc00:0000:0000:0000:0000:0000:0001:0001"
-    dir_port = "03000"
-
-    #my_ipv4 = "127.000.000.001"
-    #my_ipv6 = "::1"
-    #my_port = "06000"
-    #dir_ipv4 = "127.000.000.002"
-    #dir_ipv6 = "::1"
-    #dir_port = "03000"
-
     files_list = []
     directory = None
 
-    def __init__(self):
+    def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database):
         """
         Costruttore della classe Peer
         """
+        self.my_ipv4 = my_ipv4
+        self.my_ipv6 = my_ipv6
+        self.my_port = my_port
+        self.dir_ipv4 = dir_ipv4
+        self.dir_ipv6 = dir_ipv6
+        self.dir_port = dir_port
+        self.ttl = ttl
+        self.dbConnect = database
+
         # Searching for shareable files
         for root, dirs, files in os.walk("shareable"):
             for file in files:
@@ -158,19 +154,12 @@ class Peer(object):
                             response_message = None
                             try:
                                 self.directory.send(msg)                                # Richeista di aggiunta del file alla directory, deve contenere session id, md5 e nome del file
-                                print 'Message sent, waiting for response...'
+                                print 'Message sent...'
 
-                                response_message = self.directory.recv(7)               # Risposta della directory, deve contenere AADD ed il numero di copie del file già condivise
-                                print 'Directory responded: ' + response_message
                             except socket.error, msg:
                                 print 'Socket Error: ' + str(msg)
                             except Exception as e:
                                 print 'Error: ' + e.message
-                            else:
-                                if response_message is None:
-                                    print 'No response from directory.'
-                                else:
-                                    print "Copies inside the directory: " + response_message[-3:]   # Copie del file nella directory
 
                     if not found:
                         print 'Option not available'
@@ -215,22 +204,15 @@ class Peer(object):
                                 self.directory.send(msg)                                # Richiesta di rimozione del file dalla directory, deve contenere session id e md5
                                 print 'Message sent, waiting for response...'
 
-                                response_message = self.directory.recv(7)               # Risposta della directory, deve contenere ADEL e il numero di copie rimanenti
-                                print 'Directory responded: ' + response_message
                             except socket.error, msg:
                                 print 'Socket Error: ' + str(msg)
                             except Exception as e:
                                 print 'Error: ' + e.message
-                            else:
-                                if response_message[-3:] == '999':                                  # Il file selezionato nella directory
-                                    print "The file you chose doesn't exist in the directory"
-                                else:
-                                    print "Copies left in the directory: "+response_message[-3:]    # Numero di copie rimanenti
 
                     if not found:
                             print 'Option not available'
 
-    def search(self):
+    def search_file(self):
         """
         Esegue la ricerca di una parola tra i file condivisi nella directory.
         Dai risultati della ricerca sarà possibile scaricare il file.
@@ -359,6 +341,106 @@ class Peer(object):
                                 for idx2, owner in enumerate(file_to_download.owners):  # Download del file selezionato
                                     if selected_peer == idx2:
                                         print "Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port
-                                        Download.get_file(self.session_id, owner.ipv4, owner.ipv6, owner.port, file_to_download, self.directory)
+                                        self.get_file(self.session_id, owner.ipv4, owner.ipv6, owner.port, file_to_download)
                         else:
                             print "Unknown error, check your code!"
+
+    def get_file(self, session_id, host_ipv4, host_ipv6, host_port, file):
+        """
+        Effettua il download di un file da un altro peer
+
+        :param session_id: id sessione corrente assegnato dalla directory
+        :type session_id: str
+        :param host_ipv4: indirizzo ipv4 del peer da cui scaricare il file
+        :type host_ipv4: str
+        :param host_ipv6: indirizzo ipv6 del peer da cui scaricare il file
+        :type host_ipv6: str
+        :param host_port: porta del peer da cui scaricare il file
+        :type host_port: str
+        :param file: file da scaricare
+        :type file: file
+        :param directory: socket verso la directory (per la segnalazione del download)
+        :type directory: object
+        """
+
+        c = connection.Connection(host_ipv4, host_ipv6, host_port)  # Inizializzazione della connessione verso il peer
+        c.connect()
+        download = c.socket
+
+        msg = 'RETR' + file.md5
+        print 'Download Message: ' + msg
+        try:
+            download.send(msg)  # Richiesta di download al peer
+            print 'Message sent, waiting for response...'
+            response_message = download.recv(
+                10)  # Risposta del peer, deve contenere il codice ARET seguito dalle parti del file
+        except socket.error as e:
+            print 'Error: ' + e.message
+        except Exception as e:
+            print 'Error: ' + e.message
+        else:
+            if response_message[:4] == 'ARET':
+                n_chunks = response_message[4:10]  # Numero di parti del file da scaricare
+                # tmp = 0
+
+                filename = file.name
+                fout = open('received/' + filename,
+                            "wb")  # Apertura di un nuovo file in write byte mode (sovrascrive se già esistente)
+
+                n_chunks = int(str(n_chunks).lstrip('0'))  # Rimozione gli 0 dal numero di parti e converte in intero
+
+                for i in range(0, n_chunks):
+                    if i == 0:
+                        print 'Download started...'
+
+                    helpers.update_progress(i, n_chunks,
+                                            'Downloading ' + fout.name)  # Stampa a video del progresso del download
+
+                    try:
+                        chunk_length = recvall(download, 5)  # Ricezione dal peer la lunghezza della parte di file
+                        data = recvall(download, int(chunk_length))  # Ricezione dal peer la parte del file
+                        fout.write(data)  # Scrittura della parte su file
+                    except socket.error as e:
+                        print 'Socket Error: ' + e.message
+                        break
+                    except IOError as e:
+                        print 'IOError: ' + e.message
+                        break
+                    except Exception as e:
+                        print 'Error: ' + e.message
+                        break
+                fout.close()  # Chiusura file a scrittura ultimata
+                print "\n"
+                print 'Download completed'
+                print 'Checking file integrity...'
+                downloaded_md5 = helpers.hashfile(open(fout.name, 'rb'),
+                                                  hashlib.md5())  # Controllo dell'integrità del file appena scarcato tramite md5
+                if file.md5 == downloaded_md5:
+                    print 'The downloaded file is intact'
+                else:
+                    print 'Something is wrong. Check the downloaded file'
+            else:
+                print 'Error: unknown response from directory.\n'
+
+    def search_supe(self):
+        pktId = id_generator(16)
+        msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + self.my_port + self.ttl
+
+        print 'Search supernode message: ' + msg
+
+        # Propago a TUTTI i vicini
+        if ttl > 1 and visited:
+            ttl -= 1
+            neighbors = self.dbConnect.get_neighbors()
+
+            if (len(neighbors) > 0):
+                # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
+
+                msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + ttl
+                for neighbor in enumerate(neighbors):
+                    sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+
+
+
+
+

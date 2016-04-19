@@ -76,5 +76,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.ttl_label.setText(_translate("MainWindow", "TTL:", None))
         self.ttl_button.setText(_translate("MainWindow", "Set", None))
 
-    def print_on_main_panel(self, message):
+    def print_on_main_panel(self, message, message2):
         self.main_panel.append(message)
+        self.main_panel.append(message2)
