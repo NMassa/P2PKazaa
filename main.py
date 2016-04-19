@@ -1,6 +1,6 @@
 # coding=utf-8
 import threading
-from Client.client import Client
+from Client.Client import Client
 from servers import multithread_server
 from dbmodules.dbconnection import *
 from helpers.helpers import *

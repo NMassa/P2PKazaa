@@ -4,7 +4,6 @@ import os
 import socket
 
 import helpers
-from Client import Download
 from Owner import Owner
 from SharedFile import SharedFile
 from helpers import connection
@@ -428,16 +427,13 @@ class Client(object):
 
         print 'Search supernode message: ' + msg
 
-        # Propago a TUTTI i vicini
-        if ttl > 1 and visited:
-            ttl -= 1
-            neighbors = self.dbConnect.get_neighbors()
+        # Invio a TUTTI i vicini
 
-            if (len(neighbors) > 0):
-                # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
-
-                for neighbor in enumerate(neighbors):
-                    sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+        neighbors = self.dbConnect.get_neighbors()
+        if (len(neighbors) > 0):
+            # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
+            for neighbor in enumerate(neighbors):
+                sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
 
 
