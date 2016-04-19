@@ -1,7 +1,9 @@
 # coding=utf-8
 import os
 import hashlib
-import random, string
+import random
+import string
+import socket
 from connection import Connection
 
 
@@ -110,7 +112,7 @@ def sendTo(output_lock, ipv4, ipv6, port, msg):
     try:
         output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
 
-        c = Connection(output_lock, ipv4, ipv6, port)
+        c = Connection(ipv4, ipv6, port, output_lock)
         c.connect()
         peerSock = c.socket
 
