@@ -170,7 +170,7 @@ while True:
             for sn, idx in supernodes:
                 output(out_lck, str(idx) + ":\t" + sn.ipv4 + "\t" + sn.ipv6 + "\t" + sn.port)
 
-            output(out_lck, "lista supernodi")
+            #output(out_lck, "lista supernodi")
 
             int_option = None
             while int_option is None:

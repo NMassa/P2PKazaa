@@ -1,7 +1,7 @@
 # coding=utf-8
 import socket
 import random
-from helpers import *
+from helpers import output
 
 class Connection:
     """

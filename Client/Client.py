@@ -52,7 +52,7 @@ class Client(object):
         """
 
         output(self.out_lck, "Logging in...")
-        msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port
+        msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port)
         output(self.out_lck, 'Login message: ' + msg)
 
         response_message = None
@@ -421,7 +421,7 @@ class Client(object):
 
     def search_supe(self):
         pktId = id_generator(16)
-        msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + self.my_port + self.ttl
+        msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port) + str(self.ttl).zfill(2)
 
         output(self.out_lck, 'Search supernode message: ' + msg)
 
@@ -429,8 +429,8 @@ class Client(object):
         neighbors = self.dbConnect.get_neighbors()
         if (len(neighbors) > 0):
             # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
-            for neighbor in enumerate(neighbors):
-                sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+            for neighbor in neighbors:
+                sendTo(self.out_lck, neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
 
 

@@ -4,7 +4,7 @@ import hashlib
 import random
 import string
 import socket
-from connection import *
+import connection
 
 
 def hashfile(file, hasher, blocksize=65536):
@@ -112,7 +112,7 @@ def sendTo(output_lock, ipv4, ipv6, port, msg):
     try:
         output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
 
-        c = Connection(ipv4, ipv6, port, output_lock)
+        c = connection.Connection(ipv4, ipv6, port, output_lock)
         c.connect()
         peerSock = c.socket
 
