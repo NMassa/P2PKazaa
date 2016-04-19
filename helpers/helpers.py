@@ -2,6 +2,7 @@
 import os
 import hashlib
 import random, string
+from connection import Connection
 
 
 def hashfile(file, hasher, blocksize=65536):
@@ -101,3 +102,28 @@ def output(lock, message):
     lock.acquire()
     print message
     lock.release()
+
+
+def sendTo(output_lock, ipv4, ipv6, port, msg):
+
+    # Non invio all'indirizzo da cui è arrivato il pacchetto
+    try:
+        output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
+
+        c = Connection(output_lock, ipv4, ipv6, port)
+        c.connect()
+        peerSock = c.socket
+
+        peerSock.send(msg)
+
+        output(output_lock, "\nMessage sent : ")
+        output(output_lock, msg)
+
+        peerSock.close()
+    except IOError as e:
+        output(output_lock, 'send_near-Socket Error: ' + e.message)
+    except socket.error, msg:
+        output(output_lock, 'send_near-Socket Error: ' + str(msg))
+
+    except Exception as e:
+        output(output_lock, 'send_near-Error: ' + e.message)

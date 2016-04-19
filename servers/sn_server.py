@@ -5,7 +5,7 @@ sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from random import randint
 import threading
 from dbmodules.dbconnection import *
-from commandFile import *
+from helpers import *
 
 
 class SN_Server(threading.Thread):

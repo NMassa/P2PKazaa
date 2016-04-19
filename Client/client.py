@@ -436,7 +436,6 @@ class Client(object):
             if (len(neighbors) > 0):
                 # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
 
-                msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + ttl
                 for neighbor in enumerate(neighbors):
                     sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
