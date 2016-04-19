@@ -5,7 +5,7 @@ import random
 import string
 import socket
 import connection
-
+import sys
 
 def hashfile(file, hasher, blocksize=65536):
     buf = file.read(blocksize)

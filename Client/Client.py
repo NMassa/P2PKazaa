@@ -1,6 +1,5 @@
 # coding=utf-8
 import socket
-import helpers
 from Owner import Owner
 from SharedFile import SharedFile
 from helpers import connection
@@ -42,7 +41,7 @@ class Client(object):
         # Searching for shareable files
         for root, dirs, files in os.walk("shareable"):
             for file in files:
-                file_md5 = helpers.hashfile(open("shareable/" + file, 'rb'), hashlib.md5())
+                file_md5 = hashfile(open("shareable/" + file, 'rb'), hashlib.md5())
                 new_file = SharedFile(file, file_md5)
                 self.files_list.append(new_file)
 
@@ -390,7 +389,7 @@ class Client(object):
                     if i == 0:
                         output(self.out_lck, 'Download started...')
 
-                    helpers.update_progress(i, n_chunks,
+                    update_progress(i, n_chunks,
                                             'Downloading ' + fout.name)  # Stampa a video del progresso del download
 
                     try:
@@ -410,7 +409,7 @@ class Client(object):
 
                 output(self.out_lck, '\nDownload completed')
                 output(self.out_lck, 'Checking file integrity...')
-                downloaded_md5 = helpers.hashfile(open(fout.name, 'rb'),
+                downloaded_md5 = hashfile(open(fout.name, 'rb'),
                                                   hashlib.md5())  # Controllo dell'integrità del file appena scarcato tramite md5
                 if file.md5 == downloaded_md5:
                     output(self.out_lck, 'The downloaded file is intact')
