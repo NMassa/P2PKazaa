@@ -2,7 +2,8 @@
 import datetime
 import re
 import sys
-sys.path.insert(1,'/home/massa/Documenti/PycharmProjects/P2PKazaa')
+
+sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 
 from pymongo import MongoClient
 
@@ -10,7 +11,8 @@ from helpers.helpers import *
 
 
 class MongoConnection():
-    def __init__(self, out_lck, host="localhost", port=27017, db_name='kazaa', conn_type="local", username='', password=''):
+    def __init__(self, out_lck, host="localhost", port=27017, db_name='kazaa', conn_type="local", username='',
+                 password=''):
         self.out_lck = out_lck
         self.host = host
         self.port = port
@@ -85,7 +87,7 @@ class MongoConnection():
 
         if file is not None:
             output(self.out_lck, "already shared this file")
-            #TODO: return error
+            # TODO: return error
         else:
             file = self.db.files.find_one({"md5": md5})
 
@@ -183,9 +185,9 @@ class MongoConnection():
             self.db.neighbors.update({"$or": [{"ipv4": ipv4},
                                               {"ipv6": ipv6}]
                                       },
-                                        {
-                                            "$set": {"is_supernode": is_supernode}
-                                        })
+                                     {
+                                         "$set": {"is_supernode": is_supernode}
+                                     })
 
     def remove_neighbor(self, ipv4, ipv6, port):
         """
@@ -240,9 +242,9 @@ class MongoConnection():
             Inserisce una nuova sessione, o restitusce il session_id in caso esista già
         """
         cursor = self.db.sessions.find_one({"ipv4": ipv4,
-                                        "ipv6": ipv6,
-                                        "port": port
-                                        })
+                                            "ipv6": ipv6,
+                                            "port": port
+                                            })
         if cursor is not None:
             # TODO: modificare print
             output(self.out_lck, "already logged in")
@@ -252,10 +254,10 @@ class MongoConnection():
             try:
                 session_id = id_generator(16)
                 self.db.sessions.insert_one({"session_id": session_id,
-                                       "ipv4": ipv4,
-                                       "ipv6": ipv6,
-                                       "port": port
-                                       })
+                                             "ipv4": ipv4,
+                                             "ipv6": ipv6,
+                                             "port": port
+                                             })
                 return session_id
             except Exception as e:
                 output(self.out_lck, "insert_session: " + e.message)
@@ -279,7 +281,7 @@ class MongoConnection():
                     result = []
 
                     for peer in peers:
-                        if peer['session_id'] != session_id: # se il session id è diverso lo mantengo nella lista
+                        if peer['session_id'] != session_id:  # se il session id è diverso lo mantengo nella lista
                             result.append(peer)
 
                     file['peers'] = result
@@ -366,9 +368,10 @@ class MongoConnection():
                     if file['md5'] == md5:  # se esiste verifico se il nuovo peer è già nella lista
                         peers = file['peers']
                         if peers:
-                            found = [peer for peer in peers if peer['ipv4'] == ipv4 or peer['ipv6'] == ipv6] # se è già in lista non lo aggiungo
+                            found = [peer for peer in peers if
+                                     peer['ipv4'] == ipv4 or peer['ipv6'] == ipv6]  # se è già in lista non lo aggiungo
 
-                            if not found:   # se non esiste lo aggiungo
+                            if not found:  # se non esiste lo aggiungo
                                 peers.append({"ipv4": ipv4,
                                               "ipv6": ipv6,
                                               "port": port
@@ -467,7 +470,8 @@ class MongoConnection():
             if results:
                 for peer in results:
                     found = [neighbor for neighbor in neighbors if
-                             peer['ipv4'] == neighbor['ipv4'] or peer['ipv6'] == neighbor['ipv6']]  # se è già nella lista dei vicini non lo aggiungo
+                             peer['ipv4'] == neighbor['ipv4'] or peer['ipv6'] == neighbor[
+                                 'ipv6']]  # se è già nella lista dei vicini non lo aggiungo
 
                     if not found:  # se non esiste lo aggiungo
                         self.insert_neighbor(peer['ipv4'], peer['ipv6'], peer['port'], peer['is_supernode'])
