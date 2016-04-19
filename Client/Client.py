@@ -1,14 +1,10 @@
 # coding=utf-8
-import hashlib
-import os
 import socket
-
 import helpers
 from Owner import Owner
 from SharedFile import SharedFile
 from helpers import connection
 from helpers.helpers import *
-
 
 class Client(object):
     """
@@ -29,7 +25,7 @@ class Client(object):
     files_list = []
     directory = None
 
-    def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database):
+    def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database, out_lck):
         """
         Costruttore della classe Peer
         """
@@ -41,6 +37,7 @@ class Client(object):
         self.dir_port = dir_port
         self.ttl = ttl
         self.dbConnect = database
+        self.out_lck = out_lck
 
         # Searching for shareable files
         for root, dirs, files in os.walk("shareable"):
@@ -54,9 +51,9 @@ class Client(object):
         Esegue il login alla directory specificata
         """
 
-        print 'Logging in...'
+        output(self.out_lck, "Logging in...")
         msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port
-        print 'Login message: ' + msg
+        output(self.out_lck, 'Login message: ' + msg)
 
         response_message = None
         try:
@@ -66,56 +63,56 @@ class Client(object):
             self.directory = c.socket
 
             self.directory.send(msg)                                                    # Richiesta di login
-            print 'Message sent, waiting for response...'
+            output(self.out_lck, 'Message sent, waiting for response...')
             response_message = self.directory.recv(20)                                  # Risposta della directory, deve contenere ALGI e il session id
-            print 'Directory responded: ' + response_message
+            output(self.out_lck, 'Directory responded: ' + response_message)
         except socket.error, msg:
-            print 'Socket Error: ' + str(msg)
+            output(self.out_lck, 'Socket Error: ' + str(msg))
         except Exception as e:
             print 'Error: ' + e.message
         else:
             if response_message is None:
-                print 'No response from directory. Login failed'
+                output(self.out_lck, 'No response from directory. Login failed')
             else:
                 self.session_id = response_message[4:20]
                 if self.session_id == '0000000000000000' or self.session_id == '':
-                    print 'Troubles with the login procedure.\nPlease, try again.'
+                    output(self.out_lck, 'Troubles with the login procedure.\nPlease, try again.')
                 else:
-                    print 'Session ID assigned by the directory: ' + self.session_id
-                    print 'Login completed'
+                    output(self.out_lck, 'Session ID assigned by the directory: ' + self.session_id)
+                    output(self.out_lck, 'Login completed')
 
     def logout(self):
         """
         Esegue il logout dalla directory a cui si è connessi
         """
-        print 'Logging out...'
+        output(self.out_lck, 'Logging out...')
         msg = 'LOGO' + self.session_id
-        print 'Logout message: ' + msg
+        output(self.out_lck, 'Logout message: ' + msg)
 
         response_message = None
         try:
             self.directory.send(msg)                                                    # Richeista di logout
-            print 'Message sent, waiting for response...'
+            output(self.out_lck, 'Message sent, waiting for response...')
 
             response_message = self.directory.recv(7)                                   # Risposta della directory, deve contenere ALGO e il numero di file che erano stati condivisi
-            print 'Directory responded: ' + response_message
+            output(self.out_lck, 'Directory responded: ' + response_message)
         except socket.error, msg:
-            print 'Socket Error: ' + str(msg)
+            output(self.out_lck, 'Socket Error: ' + str(msg))
         except Exception as e:
-            print 'Error: ' + e.message
+            output(self.out_lck, 'Error: ' + e.message)
         else:
             if response_message is None:
-                print 'No response from directory. Login failed'
+                output(self.out_lck, 'No response from directory. Login failed')
             elif response_message[0:4] == 'ALGO':
                 self.session_id = None
 
                 number_file = int(response_message[4:7])                                # Numero di file che erano stati condivisi
-                print 'You\'d shared ' + str(number_file) + ' files'
+                output(self.out_lck, 'You\'d shared ' + str(number_file) + ' files')
 
                 self.directory.close()                                                  # Chiusura della connessione
-                print 'Logout completed'
+                output(self.out_lck, 'Logout completed')
             else:
-                print 'Error: unknown response from directory.\n'
+                output(self.out_lck, 'Error: unknown response from directory.\n')
 
     def share(self):
         """
@@ -123,9 +120,9 @@ class Client(object):
         """
         found = False
         while not found:
-            print '\nSelect a file to share (\'c\' to cancel):'
+            output(self.out_lck, '\nSelect a file to share (\'c\' to cancel):')
             for idx, file in enumerate(self.files_list):
-                print str(idx) + ": " + file.name
+                output(self.out_lck, str(idx) + ": " + file.name)
 
             try:
                 option = raw_input()                                                    # Selezione del file da condividere tra quelli disponibili (nella cartella shareable)
@@ -133,35 +130,35 @@ class Client(object):
                 option = None
 
             if option is None:
-                print 'Please select an option'
+                output(self.out_lck, 'Please select an option')
             elif option == "c":
                 break
             else:
                 try:
                     int_option = int(option)
                 except ValueError:
-                    print "A number is required"
+                    output(self.out_lck, "A number is required")
                 else:
                     for idx, file in enumerate(self.files_list):                        # Ricerca del file selezionato
                         if idx == int_option:
                             found = True
 
-                            print "Adding file " + file.name
+                            output(self.out_lck, "Adding file " + file.name)
                             msg = 'ADDF' + self.session_id + file.md5 + file.name.ljust(100)
-                            print 'Share message: ' + msg
+                            output(self.out_lck, 'Share message: ' + msg)
 
                             response_message = None
                             try:
                                 self.directory.send(msg)                                # Richeista di aggiunta del file alla directory, deve contenere session id, md5 e nome del file
-                                print 'Message sent...'
+                                output(self.out_lck, 'Message sent...')
 
                             except socket.error, msg:
-                                print 'Socket Error: ' + str(msg)
+                                output(self.out_lck, 'Socket Error: ' + str(msg))
                             except Exception as e:
-                                print 'Error: ' + e.message
+                                output(self.out_lck, 'Error: ' + e.message)
 
                     if not found:
-                        print 'Option not available'
+                        output(self.out_lck, 'Option not available')
 
     def remove(self):
         """
@@ -170,9 +167,9 @@ class Client(object):
 
         found = False
         while not found:
-            print "\nSelect a file to remove ('c' to cancel):"
+            output(self.out_lck, "\nSelect a file to remove ('c' to cancel):")
             for idx, file in enumerate(self.files_list):
-                print str(idx) + ": " + file.name
+                output(self.out_lck, str(idx) + ": " + file.name)
             try:
                 option = raw_input()                                                    # Selezione del file da rimuovere tra quelli disponibili (nella cartella shareable)
             except SyntaxError:
@@ -181,35 +178,35 @@ class Client(object):
                 option = None
 
             if option is None:
-                print 'Please select an option'
+                output(self.out_lck, 'Please select an option')
             elif option == "c":
                 break
             else:
                 try:
                     int_option = int(option)
                 except ValueError:
-                    print "A number is required"
+                    output(self.out_lck, "A number is required")
                 else:
                     for idx, file in enumerate(self.files_list):                        # Ricerca del file selezionato
                         if idx == int_option:
                             found = True
 
-                            print "Removing file " + file.name
+                            output(self.out_lck, "Removing file " + file.name)
                             msg = 'DELF' + self.session_id + file.md5
-                            print 'Delete message: ' + msg
+                            output(self.out_lck, 'Delete message: ' + msg)
 
                             response_message = None
                             try:
                                 self.directory.send(msg)                                # Richiesta di rimozione del file dalla directory, deve contenere session id e md5
-                                print 'Message sent, waiting for response...'
+                                output(self.out_lck, 'Message sent, waiting for response...')
 
                             except socket.error, msg:
-                                print 'Socket Error: ' + str(msg)
+                                output(self.out_lck, 'Socket Error: ' + str(msg))
                             except Exception as e:
-                                print 'Error: ' + e.message
+                                output(self.out_lck, 'Error: ' + e.message)
 
                     if not found:
-                            print 'Option not available'
+                        output(self.out_lck, 'Option not available')
 
     def search_file(self):
         """
@@ -217,52 +214,52 @@ class Client(object):
         Dai risultati della ricerca sarà possibile scaricare il file.
         Inserendo il termine '*' si richiedono tutti i file disponibili
         """
-        print 'Insert search term:'
+        output(self.out_lck, 'Insert search term:')
         try:
             term = raw_input()                                                          # Inserimento del parametro di ricerca
         except SyntaxError:
             term = None
         if term is None:
-            print 'Please select an option'
+            output(self.out_lck, 'Please select an option')
         else:
-            print "Searching files that match: " + term
+            output(self.out_lck, "Searching files that match: " + term)
 
             msg = 'FIND' + self.session_id + term.ljust(20)
-            print 'Find message: ' + msg
+            output(self.out_lck, 'Find message: ' + msg)
             response_message = None
             try:
                 self.directory.send(msg)                                                # Richeista di ricerca, deve contenere il session id ed il paramentro di ricerca (20 caratteri)
-                print 'Message sent, waiting for response...'
+                output(self.out_lck, 'Message sent, waiting for response...')
 
                 response_message = self.directory.recv(4)                               # Risposta della directory, deve contenere AFIN seguito dal numero di identificativi md5
                                                                                         # disponibili e dalla lista di file e peer che li hanno condivisi
-                print 'Directory responded: ' + response_message
+                output(self.out_lck, 'Directory responded: ' + response_message)
             except socket.error, msg:
-                print 'Socket Error: ' + str(msg)
+                output(self.out_lck, 'Socket Error: ' + str(msg))
             except Exception as e:
-                print 'Error: ' + e.message
+                output(self.out_lck, 'Error: ' + e.message)
 
             if not response_message == 'AFIN':
-                print 'Error: unknown response from directory.\n'
+                output(self.out_lck, 'Error: unknown response from directory.\n')
             else:
                 idmd5 = None
                 try:
                     idmd5 = self.directory.recv(3)                                      # Numero di identificativi md5
                 except socket.error as e:
-                    print 'Socket Error: ' + e.message
+                    output(self.out_lck, 'Socket Error: ' + e.message)
                 except Exception as e:
-                    print 'Error: ' + e.message
+                    output(self.out_lck, 'Error: ' + e.message)
 
                 if idmd5 is None:
-                    print 'Error: idmd5 is blank'
+                    output(self.out_lck, 'Error: idmd5 is blank')
                 else:
                     try:
                         idmd5 = int(idmd5)
                     except ValueError:
-                        print "idmd5 is not a number"
+                        output(self.out_lck, "idmd5 is not a number")
                     else:
                         if idmd5 == 0:
-                            print "No results found for search term: " + term
+                            output(self.out_lck, "No results found for search term: " + term)
                         elif idmd5 > 0:  # At least one result
                             available_files = []
 
@@ -284,16 +281,16 @@ class Client(object):
                                     available_files.append(SharedFile(file_i_name, file_i_md5, file_owners))
 
                             except socket.error, msg:
-                                print 'Socket Error: ' + str(msg)
+                                output(self.out_lck, 'Socket Error: ' + str(msg))
                             except Exception as e:
-                                print 'Error: ' + e.message
+                                output(self.out_lck, 'Error: ' + e.message)
 
                             if len(available_files) == 0:
-                                print "No results found for search term: " + term
+                                output(self.out_lck, "No results found for search term: " + term)
                             else:
-                                print "Select a file to download ('c' to cancel): "
+                                output(self.out_lck, "Select a file to download ('c' to cancel): ")
                                 for idx, file in enumerate(available_files):            # visualizza i risultati della ricerca
-                                    print str(idx) + ": " + file.name
+                                    output(self.out_lck, str(idx) + ": " + file.name)
 
                                 selected_file = None
                                 while selected_file is None:
@@ -303,18 +300,18 @@ class Client(object):
                                         option = None
 
                                     if option is None:
-                                        print 'Please select an option'
+                                        output(self.out_lck, 'Please select an option')
                                     elif option == 'c':
                                         return
                                     else:
                                         try:
                                             selected_file = int(option)
                                         except ValueError:
-                                            print "A number is required"
+                                            output(self.out_lck, "A number is required")
 
                                 file_to_download = available_files[selected_file]       # Recupero del file selezionato dalla lista dei risultati
 
-                                print "Select a peer ('c' to cancel): "
+                                output(self.out_lck, "Select a peer ('c' to cancel): ")
                                 for idx, file in enumerate(available_files):            # Visualizzazione la lista dei peer da cui è possibile scaricarlo
                                     if selected_file == idx:
                                         for idx2, owner in enumerate(file.owners):
@@ -328,21 +325,22 @@ class Client(object):
                                         option = None
 
                                     if option is None:
-                                        print 'Please select an option'
+                                        output(self.out_lck, 'Please select an option')
                                     elif option == 'c':
                                         return
                                     else:
                                         try:
                                             selected_peer = int(option)
                                         except ValueError:
-                                            print "A number is required"
+                                            output(self.out_lck, "A number is required")
 
                                 for idx2, owner in enumerate(file_to_download.owners):  # Download del file selezionato
                                     if selected_peer == idx2:
-                                        print "Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port
+                                        output(self.out_lck,
+                                               "Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port)
                                         self.get_file(self.session_id, owner.ipv4, owner.ipv6, owner.port, file_to_download)
                         else:
-                            print "Unknown error, check your code!"
+                            output(self.out_lck, "Unknown error, check your code!")
 
     def get_file(self, session_id, host_ipv4, host_ipv6, host_port, file):
         """
@@ -367,16 +365,16 @@ class Client(object):
         download = c.socket
 
         msg = 'RETR' + file.md5
-        print 'Download Message: ' + msg
+        output(self.out_lck, 'Download Message: ' + msg)
         try:
             download.send(msg)  # Richiesta di download al peer
-            print 'Message sent, waiting for response...'
+            output(self.out_lck, 'Message sent, waiting for response...')
             response_message = download.recv(
                 10)  # Risposta del peer, deve contenere il codice ARET seguito dalle parti del file
         except socket.error as e:
-            print 'Error: ' + e.message
+            output(self.out_lck, 'Error: ' + e.message)
         except Exception as e:
-            print 'Error: ' + e.message
+            output(self.out_lck, 'Error: ' + e.message)
         else:
             if response_message[:4] == 'ARET':
                 n_chunks = response_message[4:10]  # Numero di parti del file da scaricare
@@ -390,7 +388,7 @@ class Client(object):
 
                 for i in range(0, n_chunks):
                     if i == 0:
-                        print 'Download started...'
+                        output(self.out_lck, 'Download started...')
 
                     helpers.update_progress(i, n_chunks,
                                             'Downloading ' + fout.name)  # Stampa a video del progresso del download
@@ -400,35 +398,34 @@ class Client(object):
                         data = recvall(download, int(chunk_length))  # Ricezione dal peer la parte del file
                         fout.write(data)  # Scrittura della parte su file
                     except socket.error as e:
-                        print 'Socket Error: ' + e.message
+                        output(self.out_lck, 'Socket Error: ' + e.message)
                         break
                     except IOError as e:
-                        print 'IOError: ' + e.message
+                        output(self.out_lck, 'IOError: ' + e.message)
                         break
                     except Exception as e:
-                        print 'Error: ' + e.message
+                        output(self.out_lck, 'Error: ' + e.message)
                         break
                 fout.close()  # Chiusura file a scrittura ultimata
-                print "\n"
-                print 'Download completed'
-                print 'Checking file integrity...'
+
+                output(self.out_lck, '\nDownload completed')
+                output(self.out_lck, 'Checking file integrity...')
                 downloaded_md5 = helpers.hashfile(open(fout.name, 'rb'),
                                                   hashlib.md5())  # Controllo dell'integrità del file appena scarcato tramite md5
                 if file.md5 == downloaded_md5:
-                    print 'The downloaded file is intact'
+                    output(self.out_lck, 'The downloaded file is intact')
                 else:
-                    print 'Something is wrong. Check the downloaded file'
+                    output(self.out_lck, 'Something is wrong. Check the downloaded file')
             else:
-                print 'Error: unknown response from directory.\n'
+                output(self.out_lck, 'Error: unknown response from directory.\n')
 
     def search_supe(self):
         pktId = id_generator(16)
         msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + self.my_port + self.ttl
 
-        print 'Search supernode message: ' + msg
+        output(self.out_lck, 'Search supernode message: ' + msg)
 
         # Invio a TUTTI i vicini
-
         neighbors = self.dbConnect.get_neighbors()
         if (len(neighbors) > 0):
             # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]

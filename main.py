@@ -10,10 +10,9 @@ from GUI import main_window as MainWindow
 
 supernode_mode = False
 
-db = MongoConnection()
 
 out_lck = threading.Lock()
-
+db = MongoConnection(out_lck)
 output(out_lck, "Are you a supernode?")
 output(out_lck, "1: YES")
 output(out_lck, "2: NO")
@@ -44,7 +43,7 @@ else:
 server = multithread_server.Server(supernode_mode)
 server.start()
 
-client = Client(config.my_ipv4, config.my_ipv6, config.my_port, None, None, None, config.ttl, db)
+client = Client(config.my_ipv4, config.my_ipv6, config.my_port, None, None, None, config.ttl, db, out_lck)
 
 while True:
     print_menu_top(out_lck)

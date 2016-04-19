@@ -10,7 +10,9 @@ from helpers import *
 
 class Peer_Server(threading.Thread):
     """
-        Gestisce le comunicazioni con i peer: LOGI, LOGO, ADDF, DELF, FIND
+        Ascolta sulla porta 6000
+        Supernodo: Gestisce le comunicazioni con gli altri i supernodi: SUPE, ASUP, QUER, AQUE
+        Peer: Gestisce la propagazione dei pacchetti SUPE a tutti i vicini
     """
 
     def __init__(self, (client, address), dbConnect, output_lock, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
@@ -30,89 +32,101 @@ class Peer_Server(threading.Thread):
         conn = self.client
         cmd = conn.recv(self.size)
 
-        if cmd[:4] == 'LOGI':
-            # “LOGI”[4B].IPP2P[55B].PP2P[5B]
-            # “ALGI”[4B].SessionID[16B]
-            ipv4 = cmd[4:19]
-            ipv6 = cmd[20:59]
-            port = cmd[59:64]
+        if cmd[:4] == 'SUPE':
+            # TODO: Stampare su GUI
+
+            # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
+            # “ASUP”[4B].Pktid[16B].IPP2P[55B].PP2P[5B]
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            ttl = cmd[80:82]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock, cmd[:4] + '\t' + ipv4 + '\t' + ipv6 + '\t' + port)
+            output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                   port + "\t" + ttl)
+            visited = self.dbConnect.insert_packet(pktId)
 
-            sessionId = self.dbConnect.insert_session(ipv4, ipv6, port)
+            # Propago a TUTTI i vicini
+            if ttl > 1 and not visited:
+                ttl -= 1
+                neighbors = self.dbConnect.get_neighbors()
 
-            msg = 'ALGI' + sessionId
-            # funziona solo se il peer mantiene la connessione
-            conn.send(msg)
+                if (len(neighbors) > 0):
+                    # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
 
-        elif cmd[:4] == 'ADFF':
-            # “ADFF”[4B].SessionID[16B].Filemd5[32B].Filename[100B]
-            sessId = cmd[4:20]
-            md5 = cmd[20:52]
-            fname = cmd[52:152].strip(" ")
-            output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + md5 + "\t" + fname)
+                    msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + ttl
+                    for neighbor in enumerate(neighbors):
+                        sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
-            self.dbConnect.share_file(sessId, md5, fname)
+            # Se sono supernodo rispondo
+            if self.is_supernode:
+                msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + self.my_port
+                sendTo(ipv4, ipv6, port, msg)
 
-        elif cmd[:4] == 'DEFF':
-            # “DEFF”[4B].SessionID[16B].Filemd5[32B]
-            sessId = cmd[4:20]
-            md5 = cmd[20:52]
-            output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + md5)
+        elif cmd[:4] == 'ASUP':
+            # TODO: Stampare su GUI
 
-            self.dbConnect.remove_file(sessId, md5)
+            # “ASUP”[4B].Pktid[16B].IPP2P[55B].PP2P[5B]
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            visited = self.dbConnect.insert_packet(pktId)
 
-        elif cmd[:4] == 'LOGO':
-            # “LOGO”[4B].SessionID[16B]
-            # “ALGO”[4B].#delete[3B]
-            sessId = cmd[4:20]
-            output(self.output_lock, "\nMessagge received: " + cmd)
-            output(self.output_lock, cmd[0:4] + "\t" + sessId)
+            if not visited:
+                # inserisco il supernodo se non lo conosco altrimenti aggiorno
+                self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
 
-            delete = self.dbConnect.remove_session(sessId)
+        elif cmd[:4] == 'QUER':
+            # TODO: Stampare su GUI
 
-            msg = 'ALGO' + str(delete).zfill(3)
-
-            conn.send(msg)
-
-        elif cmd[:4] == 'FIND':
-            # “FIND”[4B].SessionID[16B].Ricerca[20B]                                         ricevo dai peer loggati
-            # “AFIN”[4B].#idmd5[3B].{Filemd5_i[32B].Filename_i[100B].#copy_i[3B].
-            # {IPP2P_i_j[55B].PP2P_i_j[5B]}(j=1..#copy_i)}(i=1..#idmd5)                       mando ai peer loggati
-
-            sessId = cmd[4:20]
-            searchStr = cmd[20:40]
+            # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            ttl = cmd[80:82]
+            searchStr = cmd[82:102]
             output(self.output_lock, "\nMessagge received: ")
-            output(self.output_lock, cmd[0:4] + "\t" + sessId + "\t" + searchStr)
+            output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                   port + "\t" + ttl + "\t" + searchStr)
 
-            if self.dbConnect.get_session(sessId) is not None:
-                pktId = id_generator(16)
-                self.dbConnect.insert_file_query(pktId, searchStr)
+            visited = self.dbConnect.insert_packet(pktId)
+            if ttl >= 1 and not visited:
+                files = self.dbConnect.get_files(searchStr)
+                if files is not None:
+                    msg = 'AQUE' + pktId
+                    for file in files:
+                        if len(file['peers']) > 0:
+                            for peer in file['peers']:
+                                msgComplete = msg + peer['ipv4'] + '|' + peer['ipv6'] + peer['port'] + file['md5'] + \
+                                              file['name']
+                                sendTo(ipv4, ipv6, port, msgComplete)
+
+            if ttl > 1 and not visited:
+                ttl -= 1
                 supernodes = self.dbConnect.get_supernodes()
 
                 if (len(supernodes) > 0):
                     # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
 
-                    msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port + str(self.ttl) + searchStr
+                    msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + ttl + searchStr
                     for supern in enumerate(supernodes):
                         sendTo(supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
-                    # aspetto per 20s le risposte dei supernodi
-                    time.sleep(20)
+        elif cmd[:4] == 'AQUE':
+            # TODO: Stampare su GUI
 
-                listResults = list(self.dbConnect.get_file_query(pktId)['results'])
+            # “AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
+            pktId = cmd[4:20]
+            ipv4 = cmd[20:35]
+            ipv6 = cmd[36:75]
+            port = cmd[75:80]
+            md5 = cmd[80:102]
+            fname = cmd[102:202]
+            output(self.output_lock, "\nMessagge received: ")
+            output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                   port + "\t" + md5 + "\t" + fname)
 
-                if listResults is not None:
-                    numMd5 = str(len(listResults)).zfill(3)
-                    msg = 'AFIN' + numMd5
-                    for file in listResults:
-                        msg += file['md5'] + file['name'].ljust(100) + str(len(file['peers'])).zfill(3)
-                        for peer in file['peers']:
-                            msg += peer['ipv4'] + '|' + peer['ipv6'] + peer['port']
-
-                    conn.send(msg)
-
-                else:
-                    conn.send('AFIN000')
+            self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)

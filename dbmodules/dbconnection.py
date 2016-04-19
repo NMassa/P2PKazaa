@@ -10,7 +10,8 @@ from helpers.helpers import *
 
 
 class MongoConnection():
-    def __init__(self, host="localhost", port=27017, db_name='kazaa', conn_type="local", username='', password=''):
+    def __init__(self, out_lck, host="localhost", port=27017, db_name='kazaa', conn_type="local", username='', password=''):
+        self.out_lck = out_lck
         self.host = host
         self.port = port
         try:
@@ -18,7 +19,7 @@ class MongoConnection():
             self.db = self.conn[db_name]
 
         except Exception as e:
-            print "Could not connect to server: " + e.message
+            output(out_lck, "Could not connect to server: " + e.message)
 
         # se sono un peer
         if True:
@@ -41,7 +42,7 @@ class MongoConnection():
                         "peers": []
                     })
             except Exception, e:
-                print "initialize_files: " + e.message
+                output(self.out_lck, "initialize_files: " + e.message)
 
     def get_file(self, md5):
         """
@@ -49,8 +50,7 @@ class MongoConnection():
         """
         cursor = self.db.files.find_one({"md5": md5})
         if cursor is None:
-            # TODO: modificare print
-            print "error"
+            output(self.out_lck, "get_file: file not found")
         else:
             return cursor
 
@@ -84,7 +84,7 @@ class MongoConnection():
         file = self.db.files.find_one({"md5": md5, "peers": {"$elemMatch": {"session_id": session_id}}})
 
         if file is not None:
-            print "already shared this file"
+            output(self.out_lck, "already shared this file")
             #TODO: return error
         else:
             file = self.db.files.find_one({"md5": md5})
@@ -103,7 +103,7 @@ class MongoConnection():
                 self.db.files.update({"md5": md5},
                                      {"$push":
                                          {
-                                             "peers" : {"session_id": session_id}
+                                             "peers": {"session_id": session_id}
                                          }
                                      })
 
@@ -114,7 +114,7 @@ class MongoConnection():
         file = self.db.files.find_one({"md5": md5, "peers": {"$elemMatch": {"session_id": session_id}}})
 
         if file is None:
-            print "file doesn't exist"
+            output(self.out_lck, "remove_file: file doesn't exist")
             # TODO: return error
         else:
             # rimuovo il session_id dalla lista dei peer
@@ -177,8 +177,8 @@ class MongoConnection():
                                           "is_supernode": is_supernode
                                           })
         else:
-            print "neighbor already exists"
-            print "updating existing neighbor"
+            output(self.out_lck, "neighbor already exists")
+            output(self.out_lck, "updating existing neighbor")
 
             self.db.neighbors.update({"$or": [{"ipv4": ipv4},
                                               {"ipv6": ipv6}]
@@ -186,7 +186,6 @@ class MongoConnection():
                                         {
                                             "$set": {"is_supernode": is_supernode}
                                         })
-
 
     def remove_neighbor(self, ipv4, ipv6, port):
         """
@@ -216,14 +215,14 @@ class MongoConnection():
         cursor = self.db.packets.find_one({"pktId": pktId})
         if cursor is not None:
             # TODO: modificare print
-            print "already visited"
+            output(self.out_lck, "already visited")
             return True
         else:
             try:
                 self.db.packets.insert_one({"pktId": pktId})
                 return False
             except Exception as e:
-                print "insert_packet: " + e.message
+                output(self.out_lck, "insert_packet: " + e.message)
 
     def get_sessions(self):
         """
@@ -246,7 +245,7 @@ class MongoConnection():
                                         })
         if cursor is not None:
             # TODO: modificare print
-            print "already logged in"
+            output(self.out_lck, "already logged in")
             # Restituisco il session id esistente come da specifiche
             return cursor['session_id']
         else:
@@ -259,7 +258,7 @@ class MongoConnection():
                                        })
                 return session_id
             except Exception as e:
-                print "insert_session: " + e.message
+                output(self.out_lck, "insert_session: " + e.message)
                 return "0000000000000000"
 
     def remove_session(self, session_id):
@@ -267,7 +266,6 @@ class MongoConnection():
             Esegue il logout di un utente eliminando i file da lui condivisi e restituendone il numero
         """
         try:
-            # TODO: restituire il numero di file condivisi
             cursor = self.db.sessions.find_one({"session_id": session_id})
 
             if cursor is not None:
@@ -298,7 +296,7 @@ class MongoConnection():
 
             return removed_files
         except Exception as e:
-            print "remove_session: " + e.message
+            output(self.out_lck, "remove_session: " + e.message)
 
     def get_file_queries(self):
         """
@@ -321,7 +319,7 @@ class MongoConnection():
         cursor = self.db.file_queries.find_one({"pktId": pktId})
 
         if cursor is not None:
-            print "query already exists"
+            output(self.out_lck, "query already exists")
         else:
             self.db.file_queries.insert_one({"pktId": pktId,
                                              "term": query_str,
@@ -390,9 +388,9 @@ class MongoConnection():
                                                 "$set": {"results": results}
                                             })
             else:
-                print "query got no results"
+                output(self.out_lck, "query got no results")
         else:
-            print "query not found"
+            output(self.out_lck, "query not found")
 
     def get_peer_queries(self):
         """
@@ -415,7 +413,7 @@ class MongoConnection():
         cursor = self.db.peer_queries.find_one({"pktId": pktId})
 
         if cursor is not None:
-            print "query already exists"
+            output(self.out_lck, "query already exists")
         else:
             self.db.peer_queries.insert_one({"pktId": pktId,
                                              "timestamp": datetime.datetime.utcnow()
@@ -453,7 +451,7 @@ class MongoConnection():
                                             "$set": {"results": peers}
                                         })
         else:
-            print "query not found"
+            output(self.out_lck, "query not found")
 
     def finalize_peer_query(self, pktId):
         """
@@ -474,6 +472,6 @@ class MongoConnection():
                     if not found:  # se non esiste lo aggiungo
                         self.insert_neighbor(peer['ipv4'], peer['ipv6'], peer['port'], peer['is_supernode'])
             else:
-                print "query got no results"
+                output(self.out_lck, "query got no results")
         else:
-            print "query not found"
+            output(self.out_lck, "query not found")
