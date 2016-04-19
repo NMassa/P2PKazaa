@@ -45,7 +45,7 @@ def main():
     server = multithread_server.Server(supernode_mode)
     server.start()
 
-    client = Client(config.my_ipv4, config.my_ipv6, config.my_port, None, None, None, config.ttl, db, out_lck)
+    client = Client(config.my_ipv4, config.my_ipv6, int(config.my_port), None, None, None, config.ttl, db, out_lck)
 
     while True:
         #print_menu_top(out_lck)
@@ -162,15 +162,13 @@ def main():
                             else:
                                 output(out_lck, "Option " + str(int_option) + " not available")
 
-
-
             else:
                 # se trovo almeno un supernodo faccio scegliere quale utilizzare per fare il login
                 output(out_lck, "Select a supernode to log in:")
 
                 supernodes = db.get_supernodes()
-                for sn, idx in supernodes:
-                    output(out_lck, str(idx) + ":\t" + sn.ipv4 + "\t" + sn.ipv6 + "\t" + sn.port)
+                for idx, sn in enumerate(supernodes):
+                    output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
 
                 #output(out_lck, "lista supernodi")
 
@@ -189,10 +187,12 @@ def main():
                         except ValueError:
                             output(out_lck, "A number is required")
                         else:
-                            #TODO: impostare l'indirizzo del supernodo che fa da directory
-                            client.dir_ipv4 = ""
-                            client.dir_ipv6 = ""
-                            client.dir_port = ""
+                            supernodes = db.get_supernodes()
+                            for idx, sn in enumerate(supernodes):
+                                if idx == int_option:
+                                    client.dir_ipv4 = sn['ipv4']
+                                    client.dir_ipv6 = sn['ipv6']
+                                    client.dir_port = int(sn['port'])
 
                             # faccio il login
                             client.login()

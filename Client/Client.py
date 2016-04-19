@@ -39,9 +39,9 @@ class Client(object):
         self.out_lck = out_lck
 
         # Searching for shareable files
-        for root, dirs, files in os.walk("shareable"):
+        for root, dirs, files in os.walk("fileCondivisi"):
             for file in files:
-                file_md5 = hashfile(open("shareable/" + file, 'rb'), hashlib.md5())
+                file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
                 new_file = SharedFile(file, file_md5)
                 self.files_list.append(new_file)
 
@@ -51,7 +51,7 @@ class Client(object):
         """
 
         output(self.out_lck, "Logging in...")
-        msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port)
+        msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port).zfill(5)
         output(self.out_lck, 'Login message: ' + msg)
 
         response_message = None
@@ -143,7 +143,7 @@ class Client(object):
                             found = True
 
                             output(self.out_lck, "Adding file " + file.name)
-                            msg = 'ADDF' + self.session_id + file.md5 + file.name.ljust(100)
+                            msg = 'ADFF' + self.session_id + file.md5 + file.name.ljust(100)
                             output(self.out_lck, 'Share message: ' + msg)
 
                             response_message = None
@@ -191,7 +191,7 @@ class Client(object):
                             found = True
 
                             output(self.out_lck, "Removing file " + file.name)
-                            msg = 'DELF' + self.session_id + file.md5
+                            msg = 'DEFF' + self.session_id + file.md5
                             output(self.out_lck, 'Delete message: ' + msg)
 
                             response_message = None
@@ -420,7 +420,7 @@ class Client(object):
 
     def search_supe(self):
         pktId = id_generator(16)
-        msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port) + str(self.ttl).zfill(2)
+        msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5) + str(self.ttl).zfill(2)
 
         output(self.out_lck, 'Search supernode message: ' + msg)
 

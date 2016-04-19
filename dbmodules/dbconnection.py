@@ -159,6 +159,7 @@ class MongoConnection():
             Restituisce solo i supernodi
             Da utilizzare nella QUER del supernodo
         """
+
         supernodes = self.db.neighbors.find({"is_supernode": "true"})
 
         return list(supernodes)
