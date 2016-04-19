@@ -44,7 +44,7 @@ class SN_Server(threading.Thread):
             visited = self.dbConnect.insert_packet(pktId)
 
             # Propago a TUTTI i vicini
-            if ttl > 1 and visited:
+            if ttl > 1 and not visited:
                 ttl -= 1
                 neighbors = self.dbConnect.get_neighbors()
 
