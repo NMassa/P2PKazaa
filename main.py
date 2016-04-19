@@ -46,10 +46,10 @@ server.start()
 client = Client(config.my_ipv4, config.my_ipv6, config.my_port, None, None, None, config.ttl, db, out_lck)
 
 while True:
-    print_menu_top(out_lck)
+    #print_menu_top(out_lck)
     output(out_lck, "## Select one of the following options ('e' to exit): ##")
     output(out_lck, "## 1: Search supernodes                               ##")
-    print_menu_bottom(out_lck)
+    #print_menu_bottom(out_lck)
 
     int_option = None
     while int_option is None:
@@ -79,13 +79,13 @@ while True:
         # una volta trovato almeno un supernodo
         if supernode_mode:
             while True:
-                print_menu_top(out_lck)
+                #print_menu_top(out_lck)
                 output(out_lck, "## Select one of the following options ('e' to exit): ##")
                 output(out_lck, "## 1: Search supernodes                               ##")
                 output(out_lck, "## 2: Add file (to myself)                            ##")
                 output(out_lck, "## 3: Delete file (from myself)                       ##")
                 output(out_lck, "## 4: Search file                                     ##")
-                print_menu_bottom(out_lck)
+                #print_menu_bottom(out_lck)
 
                 int_option = None
                 try:
@@ -197,13 +197,13 @@ while True:
                         #client.session_id = "269d4afsfdaf645as1"
 
                         while client.session_id is not None:
-                            print_menu_top(out_lck)
+                            #print_menu_top(out_lck)
                             output(out_lck, "## Select one of the following options:               ##")
                             output(out_lck, "## 1: Add file                                        ##")
                             output(out_lck, "## 2: Delete file                                     ##")
                             output(out_lck, "## 3: Search file                                     ##")
                             output(out_lck, "## 4: Log out and exit                                ##")
-                            print_menu_bottom(out_lck)
+                            #print_menu_bottom(out_lck)
 
                             int_option = None
                             try:

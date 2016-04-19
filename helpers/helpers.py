@@ -4,7 +4,7 @@ import hashlib
 import random
 import string
 import socket
-from connection import Connection
+from connection import *
 
 
 def hashfile(file, hasher, blocksize=65536):

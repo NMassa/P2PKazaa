@@ -19,7 +19,7 @@ class Server(threading.Thread):
         self.threads = []
         self.running = None
         self.output_lock = threading.Lock()
-        self.dbConnect = MongoConnection()
+        self.dbConnect = MongoConnection(self.output_lock)
         self.is_supernode = is_supernode
 
     def run(self):
