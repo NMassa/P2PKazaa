@@ -1,9 +1,10 @@
 # coding=utf-8
-import socket
+import time
 from Owner import Owner
 from SharedFile import SharedFile
 from helpers import connection
 from helpers.helpers import *
+
 
 class Client(object):
     """
@@ -26,8 +27,9 @@ class Client(object):
 
     def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database, out_lck):
         """
-        Costruttore della classe Peer
+            Costruttore della classe Peer
         """
+
         self.my_ipv4 = my_ipv4
         self.my_ipv6 = my_ipv6
         self.my_port = my_port
@@ -47,7 +49,7 @@ class Client(object):
 
     def login(self):
         """
-        Esegue il login alla directory specificata
+            Esegue il login alla directory specificata
         """
 
         output(self.out_lck, "Logging in...")
@@ -82,8 +84,9 @@ class Client(object):
 
     def logout(self):
         """
-        Esegue il logout dalla directory a cui si è connessi
+            Esegue il logout dalla directory a cui si è connessi
         """
+
         output(self.out_lck, 'Logging out...')
         msg = 'LOGO' + self.session_id
         output(self.out_lck, 'Logout message: ' + msg)
@@ -115,8 +118,9 @@ class Client(object):
 
     def share(self):
         """
-        Aggiunge un file alla directory rendendolo disponibile agli altri peer per il download
+            Aggiunge un file alla directory rendendolo disponibile agli altri peer per il download
         """
+
         found = False
         while not found:
             output(self.out_lck, '\nSelect a file to share (\'c\' to cancel):')
@@ -159,9 +163,45 @@ class Client(object):
                     if not found:
                         output(self.out_lck, 'Option not available')
 
+    def super_share(self):
+        """
+            Supernodo: Aggiunge un file alla mia directory rendendolo disponibile agli altri peer per il download
+        """
+
+        found = False
+        while not found:
+            output(self.out_lck, '\nSelect a file to share (\'c\' to cancel):')
+            for idx, file in enumerate(self.files_list):
+                output(self.out_lck, str(idx) + ": " + file.name)
+
+            try:
+                option = raw_input()  # Selezione del file da condividere tra quelli disponibili (nella cartella shareable)
+            except SyntaxError:
+                option = None
+
+            if option is None:
+                output(self.out_lck, 'Please select an option')
+            elif option == "c":
+                break
+            else:
+                try:
+                    int_option = int(option)
+                except ValueError:
+                    output(self.out_lck, "A number is required")
+                else:
+                    for idx, file in enumerate(self.files_list):  # Ricerca del file selezionato
+                        if idx == int_option:
+                            found = True
+
+                            output(self.out_lck, "Adding file to my directory" + file.name)
+                            self.dbConnect.share_file(self.session_id, file.md5, file.name)
+
+                    if not found:
+                        output(self.out_lck, 'Option not available')
+
     def remove(self):
         """
-        Rimuove un file condiviso nella directory
+            Rimuove un file condiviso nella directory
         """
 
         found = False
@@ -203,6 +243,43 @@ class Client(object):
                                 output(self.out_lck, 'Socket Error: ' + str(msg))
                             except Exception as e:
                                 output(self.out_lck, 'Error: ' + e.message)
+
+                    if not found:
+                        output(self.out_lck, 'Option not available')
+
+    def super_remove(self):
+        """
+            Supernodo: Rimuove un file condiviso nella mia directory
+        """
+
+        found = False
+        while not found:
+            output(self.out_lck, "\nSelect a file to remove ('c' to cancel):")
+            for idx, file in enumerate(self.files_list):
+                output(self.out_lck, str(idx) + ": " + file.name)
+            try:
+                option = raw_input()  # Selezione del file da rimuovere tra quelli disponibili (nella cartella shareable)
+            except SyntaxError:
+                option = None
+            except Exception:
+                option = None
+
+            if option is None:
+                output(self.out_lck, 'Please select an option')
+            elif option == "c":
+                break
+            else:
+                try:
+                    int_option = int(option)
+                except ValueError:
+                    output(self.out_lck, "A number is required")
+                else:
+                    for idx, file in enumerate(self.files_list):  # Ricerca del file selezionato
+                        if idx == int_option:
+                            found = True
+
+                            output(self.out_lck, "Removing file " + file.name)
+                            self.dbConnect.remove_file(self.session_id, file.md5)
 
                     if not found:
                         output(self.out_lck, 'Option not available')
@@ -340,6 +417,105 @@ class Client(object):
                                         self.get_file(self.session_id, owner.ipv4, owner.ipv6, owner.port, file_to_download)
                         else:
                             output(self.out_lck, "Unknown error, check your code!")
+
+    def super_search_file(self):
+        """
+            Esegue la ricerca di una parola tra i file condivisi nella directory degli altri supernodi.
+            Dai risultati della ricerca sarà possibile scaricare il file.
+            Inserendo il termine '*' si richiedono tutti i file disponibili
+        """
+
+        output(self.out_lck, 'Insert search term:')
+        try:
+            term = raw_input()  # Inserimento del parametro di ricerca
+        except SyntaxError:
+            term = None
+        if term is None:
+            output(self.out_lck, 'Please insert a search term')
+        else:
+            output(self.out_lck, "Searching files that match: " + term)
+
+            #msg = 'FIND' + self.session_id + term.ljust(20)
+            #msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port + str(self.ttl) + term.ljust(20)
+
+            pktId = id_generator(16)
+            self.dbConnect.insert_file_query(pktId, term)
+
+            msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port).zfill(5) + str(self.ttl).zfill(2) + term.ljust(20)
+            output(self.out_lck, 'Query message: ' + msg)
+            supernodes = self.dbConnect.get_supernodes()
+
+            if (len(supernodes) > 0):
+                # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
+
+                for supern in supernodes:
+                    sendTo(self.out_lck, supern['ipv4'], supern['ipv6'], supern['port'], msg)
+
+                # aspetto per 20s le risposte dei supernodi
+                time.sleep(20)
+
+                available_files = list(self.dbConnect.get_file_query(pktId)['results'])
+
+                if available_files is not None:
+
+                    output(self.out_lck, "Select a file to download ('c' to cancel): ")
+                    for idx, file in enumerate(available_files):  # visualizza i risultati della ricerca
+                        output(self.out_lck, str(idx) + ": " + file['name'])
+
+                    selected_file = None
+                    while selected_file is None:
+                        try:
+                            option = raw_input()  # Selezione del file da scaricare
+                        except SyntaxError:
+                            option = None
+
+                        if option is None:
+                            output(self.out_lck, 'Please select an option')
+                        elif option == 'c':
+                            return
+                        else:
+                            try:
+                                selected_file = int(option)
+                            except ValueError:
+                                output(self.out_lck, "A number is required")
+
+                    file_to_download = available_files[
+                        selected_file]  # Recupero del file selezionato dalla lista dei risultati
+
+                    output(self.out_lck, "Select a peer ('c' to cancel): ")
+                    for idx, file in enumerate(
+                            available_files):  # Visualizzazione la lista dei peer da cui è possibile scaricarlo
+                        if selected_file == idx:
+                            for idx2, owner in enumerate(file['peers']):
+                                print str(idx2) + ": " + owner['ipv4'] + " | " + owner['ipv6'] + " | " + owner['port']
+
+                    selected_peer = None
+                    while selected_peer is None:
+                        try:
+                            option = raw_input()  # Selezione di un peer da cui scaricare il file
+                        except SyntaxError:
+                            option = None
+
+                        if option is None:
+                            output(self.out_lck, 'Please select an option')
+                        elif option == 'c':
+                            return
+                        else:
+                            try:
+                                selected_peer = int(option)
+                            except ValueError:
+                                output(self.out_lck, "A number is required")
+
+                    for idx2, owner in enumerate(file_to_download['peers']):  # Download del file selezionato
+                        if selected_peer == idx2:
+                            output(self.out_lck,
+                                   "Downloading file from: " + owner['ipv4'] + " | " + owner['ipv6'] + " | " + owner['port'])
+
+                            f = SharedFile(file_to_download['name'], file_to_download['md5'], file_to_download['peers'])
+                            self.get_file(self.session_id, owner['ipv4'], owner['ipv6'], owner['port'], f)
+
+                else:
+                    output(self.out_lck, "No match found for the search term " + term)
 
     def get_file(self, session_id, host_ipv4, host_ipv6, host_port, file):
         """

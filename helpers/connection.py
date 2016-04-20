@@ -6,13 +6,8 @@ from helpers import output
 class Connection:
     """
     Crea le connessioni a directory e peers
-
-    Attributes:
-        socket: socket per le comunicazioni
-        ipv4: indirizzo ipv4
-        ipv6: indirizzo ipv6
-        port: porta
     """
+
     socket = None
     ipv4 = None
     port = None
@@ -22,28 +17,19 @@ class Connection:
     def __init__(self, ipv4, ipv6, port, out_lck):
         """
         Costruttore della classe Connection
-
-        :param ipv4: indirizzo ipv4
-        :type ipv4: str
-        :param ipv6: indirizzo ipv6
-        :type ipv6: str
-        :param port: porta
-        :type port: str
         """
+
         self.ipv4 = ipv4
         self.ipv6 = ipv6
         self.port = int(port)
         self.out_lck = out_lck
-        #self.ipv4 = '127.0.0.1'
-        #self.ipv6 = '::1'
-        #print (self.dir_ipv4)
-        #print (self.dir_ipv6)
 
     def connect(self):
         """
         Crea una socket TCP selezionando un indirizzo a caso (con probabilità 50/50) tra ipv4 e ipv6
         Da utilizzare per le richieste alle directory
         """
+
         if random.choice((True, False)):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)                 # creazione socket ipv4
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -84,6 +70,7 @@ class Connection:
         Crea una socket TCP ipv6 in ascolto sull'indirizzo e porta specificati
         Da utilizzare per le richieste degli altri peer
         """
+
         self.socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)                # creazione socket ipv6
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:

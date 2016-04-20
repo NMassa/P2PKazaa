@@ -3,10 +3,8 @@ import datetime
 import re
 import sys
 
-sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
-
+# sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from pymongo import MongoClient
-
 from helpers.helpers import *
 
 
@@ -86,8 +84,7 @@ class MongoConnection():
         file = self.db.files.find_one({"md5": md5, "peers": {"$elemMatch": {"session_id": session_id}}})
 
         if file is not None:
-            output(self.out_lck, "already shared this file")
-            # TODO: return error
+            output(self.out_lck, "You already shared this file")
         else:
             file = self.db.files.find_one({"md5": md5})
 
@@ -173,7 +170,7 @@ class MongoConnection():
                                          "port": port
                                          })
 
-        if cursor is None:
+        if cursor.count() == 0:
             self.db.neighbors.insert_one({"ipv4": ipv4,
                                           "ipv6": ipv6,
                                           "port": port,
@@ -199,7 +196,7 @@ class MongoConnection():
                                          "port": port
                                          })
 
-        if cursor is not None:
+        if cursor.count() != 0:
             self.db.neighbors.remove({"$or": [{"ipv4": ipv4},
                                               {"ipv6": ipv6}]
                                       })
@@ -360,7 +357,7 @@ class MongoConnection():
         """
             Aggiorna i risultati di una ricerca inserendo il nuovo peer (dalla risposto alla QUER)
         """
-        query = self.db.file_queries.find_one({"pktId": pktId})  # recuper la ricerca dal database
+        query = self.db.file_queries.find_one({"pktId": pktId})  # recupero la ricerca dal database
         if query is not None:
             results = query['results']
 
@@ -392,7 +389,22 @@ class MongoConnection():
                                                 "$set": {"results": results}
                                             })
             else:
-                output(self.out_lck, "query got no results")
+                results.append({"name": name.strip(" "),
+                                "md5": md5,
+                                "peers": [
+                                    {
+                                        "port": port,
+                                        "ipv4": ipv4,
+                                        "ipv6": ipv6
+                                    }]
+                                })
+
+                # Aggiorno la ricerca
+                self.db.file_queries.update({"pktId": pktId},
+                                            {
+                                                "$set": {"results": results}
+                                            })
+                # output(self.out_lck, "query got no results")
         else:
             output(self.out_lck, "query not found")
 

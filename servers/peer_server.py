@@ -1,7 +1,7 @@
 # coding=utf-8
 import socket, os, hashlib, select, sys, time
 
-sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
+#sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from random import randint
 import threading
 from dbmodules.dbconnection import *
@@ -41,10 +41,11 @@ class Peer_Server(threading.Thread):
             ipv4 = cmd[20:35]
             ipv6 = cmd[36:75]
             port = cmd[75:80]
-            ttl = cmd[80:82]
+            ttl = int(cmd[80:82])
             output(self.output_lock, "\nMessagge received: ")
             output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                   port + "\t" + ttl)
+                   port + "\t" + str(ttl))
+
             visited = self.dbConnect.insert_packet(pktId)
 
             # Propago a TUTTI i vicini
@@ -55,14 +56,14 @@ class Peer_Server(threading.Thread):
                 if (len(neighbors) > 0):
                     # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
 
-                    msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + ttl
-                    for neighbor in enumerate(neighbors):
-                        sendTo(neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                    msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2)
+                    for neighbor in neighbors:
+                        sendTo(self.output_lock, neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
             # Se sono supernodo rispondo
             if self.is_supernode:
-                msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + self.my_port
-                sendTo(ipv4, ipv6, port, msg)
+                msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5)
+                sendTo(self.output_lock, ipv4, ipv6, port, msg)
 
         elif cmd[:4] == 'ASUP':
             # TODO: Stampare su GUI
@@ -72,11 +73,9 @@ class Peer_Server(threading.Thread):
             ipv4 = cmd[20:35]
             ipv6 = cmd[36:75]
             port = cmd[75:80]
-            visited = self.dbConnect.insert_packet(pktId)
 
-            if not visited:
-                # inserisco il supernodo se non lo conosco altrimenti aggiorno
-                self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
+            # inserisco il supernodo se non lo conosco altrimenti aggiorno
+            self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
 
         elif cmd[:4] == 'QUER':
             # TODO: Stampare su GUI
@@ -86,11 +85,11 @@ class Peer_Server(threading.Thread):
             ipv4 = cmd[20:35]
             ipv6 = cmd[36:75]
             port = cmd[75:80]
-            ttl = cmd[80:82]
+            ttl = int(cmd[80:82])
             searchStr = cmd[82:102]
             output(self.output_lock, "\nMessagge received: ")
             output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                   port + "\t" + ttl + "\t" + searchStr)
+                   port + "\t" + str(ttl) + "\t" + searchStr)
 
             visited = self.dbConnect.insert_packet(pktId)
             if ttl >= 1 and not visited:
@@ -102,7 +101,7 @@ class Peer_Server(threading.Thread):
                             for peer in file['peers']:
                                 msgComplete = msg + peer['ipv4'] + '|' + peer['ipv6'] + peer['port'] + file['md5'] + \
                                               file['name']
-                                sendTo(ipv4, ipv6, port, msgComplete)
+                                sendTo(self.output_lock, ipv4, ipv6, port, msgComplete)
 
             if ttl > 1 and not visited:
                 ttl -= 1
@@ -111,9 +110,9 @@ class Peer_Server(threading.Thread):
                 if (len(supernodes) > 0):
                     # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
 
-                    msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + ttl + searchStr
-                    for supern in enumerate(supernodes):
-                        sendTo(supern['ipv4'], supern['ipv6'], supern['port'], msg)
+                    msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2) + searchStr
+                    for supern in supernodes:
+                        sendTo(self.output_lock, supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
         elif cmd[:4] == 'AQUE':
             # TODO: Stampare su GUI
@@ -123,8 +122,8 @@ class Peer_Server(threading.Thread):
             ipv4 = cmd[20:35]
             ipv6 = cmd[36:75]
             port = cmd[75:80]
-            md5 = cmd[80:102]
-            fname = cmd[102:202]
+            md5 = cmd[80:112]
+            fname = cmd[112:212]
             output(self.output_lock, "\nMessagge received: ")
             output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
                    port + "\t" + md5 + "\t" + fname)
