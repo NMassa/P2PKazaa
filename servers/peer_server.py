@@ -11,8 +11,8 @@ from helpers import *
 class Peer_Server(threading.Thread):
     """
         Ascolta sulla porta 6000
-        Supernodo: Gestisce le comunicazioni con gli altri i supernodi: SUPE, ASUP, QUER, AQUE
-        Peer: Gestisce la propagazione dei pacchetti SUPE a tutti i vicini
+        Supernodo: Gestisce le comunicazioni con gli altri i supernodi e l'invio dei file: SUPE, ASUP, QUER, AQUE, RETR
+        Peer: Gestisce la propagazione dei pacchetti SUPE a tutti i vicini e l'invio dei file
     """
 
     def __init__(self, (client, address), dbConnect, output_lock, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
@@ -130,3 +130,61 @@ class Peer_Server(threading.Thread):
                    port + "\t" + md5 + "\t" + fname)
 
             self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
+        elif cmd[:4] == 'RETR':
+            # TODO: Stampare su GUI
+
+            output(self.output_lock, "\nMessagge received: " + cmd)
+
+            md5Remoto = cmd[4:36]
+            file = self.dbConnect.get_file(md5Remoto)
+            fileFd = None
+            try:
+                fileFd = open("fileCondivisi/" + file['name'], "rb")
+            except Exception, e:
+                output(self.output_lock, 'Error: ' + e.message + "\n")
+            else:
+                tot_dim = os.stat("fileCondivisi/" + file['name']).st_size  # Calcolo delle dimesioni del file
+                n_chunks = int(tot_dim // 1024)  # Calcolo del numero di parti
+                resto = tot_dim % 1024  # Eventuale resto
+                if resto != 0.0:
+                    n_chunks += 1
+
+                fileFd.seek(0, 0)  # Spostamento all'inizio del file
+
+                try:
+
+                    chunks_sent = 0
+                    chunk_size = 1024
+
+                    buff = fileFd.read(chunk_size)  # Lettura del primo chunk
+
+                    msg = 'ARET' + str(n_chunks).zfill(
+                        6)  # Risposta alla richiesta di download, deve contenere ARET ed il numero di chunks che saranno inviati
+
+                    conn.sendall(msg)
+
+                    output(self.output_lock, '\nUpload Message: ' + msg[0:4] + "\t" + msg[4:10])
+
+                    while len(buff) == chunk_size:  # Invio dei chunks
+                        try:
+                            msg = str(len(buff)).zfill(5) + buff
+                            conn.sendall(msg)  # Invio di
+                            chunks_sent += 1
+
+                            update_progress(self.output_lock, chunks_sent, n_chunks,
+                                            'Uploading ' + fileFd.name)  # Stampa a video del progresso dell'upload
+
+                            buff = fileFd.read(chunk_size)  # Lettura chunk successivo
+                        except IOError:
+                            output(self.output_lock,
+                                   "Client_run-Error: Connection error due to the death of the peer!!!\n")
+                    if len(buff) != 0:  # Invio dell'eventuale resto, se più piccolo di chunk_size
+
+                        msg = str(len(buff)).zfill(5) + buff
+                        conn.sendall(msg)
+
+                    output(self.output_lock, "\r\nUpload Completed")
+
+                    fileFd.close()  # Chiusura del file
+                except EOFError:
+                    output(self.output_lock, "Client_run-Error: You have read a EOF char")

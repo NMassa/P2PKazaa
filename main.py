@@ -232,7 +232,7 @@ def main():
                                         elif int_option == 3:
                                             # creo una query e la invio agli altri supernodi
                                             print "query file"
-                                            client.search()
+                                            client.search_file()
 
                                             not_done = True
                                             while not_done:
