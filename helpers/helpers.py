@@ -6,6 +6,7 @@ import string
 import socket
 import connection
 import sys
+import time
 
 def hashfile(file, hasher, blocksize=65536):
     buf = file.read(blocksize)
@@ -105,6 +106,16 @@ def output(lock, message):
     print message
     lock.release()
 
+def output_timer(lock, seconds):
+    lock.acquire()
+
+    for i in range(0, seconds):
+        sys.stdout.write('\r%s' % i)
+        sys.stdout.flush()
+        time.sleep(1)
+
+    lock.release()
+
 def update_progress(lock, count, total, suffix=''):
     """
     Stampa la barra di progresso di download e upload
@@ -128,6 +139,8 @@ def update_progress(lock, count, total, suffix=''):
     sys.stdout.flush()
 
     lock.release()
+
+
 
 def sendTo(output_lock, ipv4, ipv6, port, msg):
 

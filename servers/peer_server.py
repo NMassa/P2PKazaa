@@ -74,8 +74,7 @@ class Peer_Server(threading.Thread):
             ipv6 = cmd[36:75]
             port = cmd[75:80]
 
-            # inserisco il supernodo se non lo conosco altrimenti aggiorno
-            self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
+            self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
 
         elif cmd[:4] == 'QUER':
             # TODO: Stampare su GUI
@@ -129,6 +128,7 @@ class Peer_Server(threading.Thread):
                    port + "\t" + md5 + "\t" + fname)
 
             self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
+
         elif cmd[:4] == 'RETR':
             # TODO: Stampare su GUI
 

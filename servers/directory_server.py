@@ -1,4 +1,5 @@
 # coding=utf-8
+# coding=utf-8
 import socket, os, hashlib, select, sys, time
 
 sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
@@ -10,7 +11,7 @@ from helpers import *
 
 class Directory_Server(threading.Thread):
     """
-        Ascolta sulla porta 80
+        Ascolta sulla porta 3000
         Supernodo: Gestisce le comunicazioni tra directory e i peer: LOGI, LOGO, ADDF, DELF, FIND
         Peer: non utilizzata
     """
@@ -123,3 +124,5 @@ class Directory_Server(threading.Thread):
 
                 else:
                     conn.send('AFIN000')
+        else:
+            output(self.output_lock, "\n Command not recognized")

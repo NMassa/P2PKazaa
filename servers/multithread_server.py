@@ -11,7 +11,7 @@ class Server(threading.Thread):
         threading.Thread.__init__(self)
         self.host = ''
         self.port_peer = 6000
-        self.port_dir = 80
+        self.port_dir = 3000
         self.backlog = 5
         self.size = 1024
         self.server = None
