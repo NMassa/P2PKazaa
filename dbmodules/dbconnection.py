@@ -72,7 +72,7 @@ class MongoConnection():
         """
             Restituisce i file il cui nome comprende la stringa query_str
         """
-        regexp = re.compile(query_str, re.IGNORECASE)
+        regexp = re.compile(query_str.strip(" "), re.IGNORECASE)
         files = self.db.files.find({"name": {"$regex": regexp}})
 
         return list(files)

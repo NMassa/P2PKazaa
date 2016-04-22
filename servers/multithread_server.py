@@ -5,9 +5,13 @@ sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from peer_server import *
 from directory_server import *
 import config
+from PyQt4 import QtGui, QtCore
 
-class Server(threading.Thread):
-    def __init__(self, is_supernode):
+class Server(threading.Thread, QtCore.QThread):
+    print_trigger = QtCore.pyqtSignal(str, int)
+
+    def __init__(self, is_supernode, parent = None):
+        QtCore.QThread.__init__(self, parent)
         threading.Thread.__init__(self)
         self.host = ''
         self.port_peer = 6000
@@ -24,6 +28,7 @@ class Server(threading.Thread):
 
     def run(self):
 
+        self.print_trigger.emit("Start multithread server...", 10)
         try:
             for item in self.port_dir, self.port_peer:
                 self.sock_lst.append(socket.socket(socket.AF_INET6, socket.SOCK_STREAM))

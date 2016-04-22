@@ -25,7 +25,7 @@ class Client(object):
     files_list = []
     directory = None
 
-    def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database, out_lck):
+    def __init__(self, my_ipv4, my_ipv6, my_port, dir_ipv4, dir_ipv6, dir_port, ttl, database, out_lck, print_trigger):
         """
             Costruttore della classe Peer
         """
@@ -39,6 +39,9 @@ class Client(object):
         self.ttl = ttl
         self.dbConnect = database
         self.out_lck = out_lck
+        self.print_trigger = print_trigger
+        self.print_trigger.emit("Start client:", 0)
+
 
         # Searching for shareable files
         for root, dirs, files in os.walk("fileCondivisi"):

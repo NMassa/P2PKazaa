@@ -1,5 +1,12 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'untitled.ui'
+#
+# Created by: PyQt4 UI code generator 4.11.4
+#
+# WARNING! All changes made in this file will be lost!
+
 from PyQt4 import QtCore, QtGui
-import sys, time, random
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -19,53 +26,51 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
         self.setObjectName(_fromUtf8("MainWindow"))
-        self.resize(208, 133)
+        self.resize(1500, 1250)
+        self.setMinimumSize(QtCore.QSize(1500, 900))
+        self.setMaximumSize(QtCore.QSize(1500, 900))
         self.centralwidget = QtGui.QWidget(self)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
         self.centralwidget.setSizePolicy(sizePolicy)
+        self.centralwidget.setMinimumSize(QtCore.QSize(1000, 1200))
+        self.centralwidget.setMaximumSize(QtCore.QSize(1000, 1200))
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout_3.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
-        self.verticalLayout = QtGui.QVBoxLayout()
-        self.verticalLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
-        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout = QtGui.QHBoxLayout()
-        self.horizontalLayout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
-        self.ttl_label = QtGui.QLabel(self.centralwidget)
-        self.ttl_label.setObjectName(_fromUtf8("ttl_label"))
-        self.horizontalLayout.addWidget(self.ttl_label)
-        self.ttl_value = QtGui.QSpinBox(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ttl_value.sizePolicy().hasHeightForWidth())
-        self.ttl_value.setSizePolicy(sizePolicy)
-        self.ttl_value.setMinimum(1)
-        self.ttl_value.setObjectName(_fromUtf8("ttl_value"))
-        self.horizontalLayout.addWidget(self.ttl_value)
-        self.ttl_button = QtGui.QPushButton(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ttl_button.sizePolicy().hasHeightForWidth())
-        self.ttl_button.setSizePolicy(sizePolicy)
-        self.ttl_button.setMinimumSize(QtCore.QSize(85, 0))
-        self.ttl_button.setObjectName(_fromUtf8("ttl_button"))
-        self.horizontalLayout.addWidget(self.ttl_button)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.gridLayout_2 = QtGui.QGridLayout()
-        self.gridLayout_2.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
-        self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
-        self.main_panel = QtGui.QTextBrowser(self.centralwidget)
-        self.main_panel.setObjectName(_fromUtf8("main_panel"))
-        self.gridLayout_2.addWidget(self.main_panel, 1, 0, 1, 1)
-        self.verticalLayout.addLayout(self.gridLayout_2)
-        self.verticalLayout_3.addLayout(self.verticalLayout)
+        self.label = QtGui.QLabel(self.centralwidget)
+        self.label.setMaximumSize(QtCore.QSize(90, 20))
+        self.label.setObjectName(_fromUtf8("label"))
+        self.horizontalLayout.addWidget(self.label)
+        self.label_1 = QtGui.QLabel(self.centralwidget)
+        self.label_1.setMaximumSize(QtCore.QSize(50, 20))
+        self.label_1.setObjectName(_fromUtf8("label_1"))
+        self.horizontalLayout.addWidget(self.label_1)
+        self.verticalLayout_3.addLayout(self.horizontalLayout)
+        self.gridLayout_3 = QtGui.QGridLayout()
+        self.gridLayout_3.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
+        self.gridLayout_3.setContentsMargins(-1, 0, -1, 0)
+        self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
+        self.Panel = QtGui.QGridLayout()
+        self.Panel.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
+        self.Panel.setObjectName(_fromUtf8("Panel"))
+        self.client = QtGui.QTextBrowser(self.centralwidget)
+        self.client.setMinimumSize(QtCore.QSize(300, 200))
+        self.client.setMaximumSize(QtCore.QSize(1000, 1200))
+        self.client.setObjectName(_fromUtf8("client"))
+        self.Panel.addWidget(self.client, 1, 0, 1, 1)
+        self.server = QtGui.QTextBrowser(self.centralwidget)
+        self.server.setMinimumSize(QtCore.QSize(300, 200))
+        self.server.setMaximumSize(QtCore.QSize(1000, 1200))
+        self.server.setObjectName(_fromUtf8("server"))
+        self.Panel.addWidget(self.server, 1, 1, 1, 1)
+        self.gridLayout_3.addLayout(self.Panel, 0, 0, 1, 1)
+        self.verticalLayout_3.addLayout(self.gridLayout_3)
         self.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(self)
@@ -73,9 +78,33 @@ class Ui_MainWindow(QtGui.QMainWindow):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
-        self.ttl_label.setText(_translate("MainWindow", "TTL:", None))
-        self.ttl_button.setText(_translate("MainWindow", "Set", None))
+        self.label.setText(_translate("MainWindow", "Peer", None))
+        self.label_1.setText(_translate("MainWindow", "Server", None))
 
-    def print_on_main_panel(self, message, message2):
-        self.main_panel.append(message)
-        self.main_panel.append(message2)
+    def print_on_main_panel(self, message, color):
+        if color == 11:
+            #self.main_panel.setStyleSheet("QTextEdit {color:red}")
+            self.server.setTextColor(QtGui.QColor('red'))
+            self.server.append(message)
+        if color == 10:
+            # self.main_panel.setStyleSheet("QTextEdit {color:red}")
+            self.server.setTextColor(QtGui.QColor('black'))
+            self.server.append(message)
+        if color == 0:
+            #self.main_panel.setStyleSheet("QTextEdit {color:blue}")
+            self.client.setTextColor(QtGui.QColor('black'))
+            #self.main_panel.append(message)
+            self.client.append(message)
+        if color == 1:
+            # self.main_panel.setStyleSheet("QTextEdit {color:blue}")
+            self.client.setTextColor(QtGui.QColor('red'))
+            # self.main_panel.append(message)
+            self.client.append(message)
+
+'''
+0 stampa sul terminale Client in nero
+1 stampa sul terminale Client in rosso
+
+10 stampa sul terminale Server in nero
+11 stampa sul terminale Server in rosso
+'''
