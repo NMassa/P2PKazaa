@@ -1,7 +1,7 @@
 # coding=utf-8
 import socket, os, hashlib, select, sys, time
 
-#sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
+# sys.path.insert(1, '/home/massa/Documenti/PycharmProjects/P2PKazaa')
 from random import randint
 import threading
 from dbmodules.dbconnection import *
@@ -15,13 +15,14 @@ class Peer_Server(threading.Thread):
         Peer: Gestisce la propagazione dei pacchetti SUPE a tutti i vicini e l'invio dei file
     """
 
-    def __init__(self, (client, address), dbConnect, output_lock, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
+    def __init__(self, (client, address), dbConnect, output_lock, print_trigger, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
         threading.Thread.__init__(self)
         self.client = client
         self.address = address
         self.size = 1024
         self.dbConnect = dbConnect
         self.output_lock = output_lock
+        self.print_trigger = print_trigger
         self.my_ipv4 = my_ipv4
         self.my_ipv6 = my_ipv6
         self.my_port = my_port
@@ -33,8 +34,6 @@ class Peer_Server(threading.Thread):
         cmd = conn.recv(self.size)
         while len(cmd) > 0:
             if cmd[:4] == 'SUPE':
-                # TODO: Stampare su GUI
-
                 # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
                 # “ASUP”[4B].Pktid[16B].IPP2P[55B].PP2P[5B]
                 pktId = cmd[4:20]
@@ -42,9 +41,9 @@ class Peer_Server(threading.Thread):
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
-                output(self.output_lock, "\nMessagge received: ")
-                output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                       port + "\t" + str(ttl))
+                self.print_trigger.emit(
+                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
+                    "\t" + port + "\t" + str(ttl), "12")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -58,30 +57,26 @@ class Peer_Server(threading.Thread):
 
                         msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2)
                         for neighbor in neighbors:
-                            sendTo(self.output_lock, neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                            sendTo(self.print_trigger, "1", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
                 # Se sono supernodo rispondo
                 if self.is_supernode:
                     msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5)
-                    sendTo(self.output_lock, ipv4, ipv6, port, msg)
+                    sendTo(self.print_trigger, "1", ipv4, ipv6, port, msg)
 
             elif cmd[:4] == 'ASUP':
-                # TODO: Stampare su GUI
-
                 # “ASUP”[4B].Pktid[16B].IPP2P[55B].PP2P[5B]
                 pktId = cmd[4:20]
                 ipv4 = cmd[20:35]
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
-                output(self.output_lock, "\nMessagge received: ")
-                output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                       port)
+                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
+                                        ipv6 + "\t" + port, "12")
+
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
-                #self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
+                # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
 
             elif cmd[:4] == 'QUER':
-                # TODO: Stampare su GUI
-
                 # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
                 pktId = cmd[4:20]
                 ipv4 = cmd[20:35]
@@ -89,9 +84,9 @@ class Peer_Server(threading.Thread):
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
                 searchStr = cmd[82:102]
-                output(self.output_lock, "\nMessagge received: ")
-                output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                       port + "\t" + str(ttl) + "\t" + searchStr)
+                self.print_trigger.emit(
+                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                    port + "\t" + str(ttl).zfill(2) + "\t" + searchStr, "12")
 
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
@@ -103,7 +98,7 @@ class Peer_Server(threading.Thread):
                                 for peer in file['peers']:
                                     msgComplete = msg + peer['ipv4'] + '|' + peer['ipv6'] + peer['port'] + file['md5'] + \
                                                   file['name']
-                                    sendTo(self.output_lock, ipv4, ipv6, port, msgComplete)
+                                    sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
 
                 if ttl > 1 and not visited:
                     ttl -= 1
@@ -114,11 +109,9 @@ class Peer_Server(threading.Thread):
 
                         msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2) + searchStr
                         for supern in supernodes:
-                            sendTo(self.output_lock, supern['ipv4'], supern['ipv6'], supern['port'], msg)
+                            sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
             elif cmd[:4] == 'AQUE':
-                # TODO: Stampare su GUI
-
                 # “AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
                 pktId = cmd[4:20]
                 ipv4 = cmd[20:35]
@@ -126,24 +119,24 @@ class Peer_Server(threading.Thread):
                 port = cmd[75:80]
                 md5 = cmd[80:112]
                 fname = cmd[112:212]
-                output(self.output_lock, "\nMessagge received: ")
-                output(self.output_lock, cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                       port + "\t" + md5 + "\t" + fname)
+                self.print_trigger.emit(
+                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                    port + "\t" + md5 + "\t" + fname, "12")
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
             elif cmd[:4] == 'RETR':
-                # TODO: Stampare su GUI
-
-                output(self.output_lock, "\nMessagge received: " + cmd)
-
                 md5Remoto = cmd[4:36]
+
+                self.print_trigger.emit(
+                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + md5Remoto, "12")
+
                 file = self.dbConnect.get_file(md5Remoto)
                 fileFd = None
                 try:
                     fileFd = open("fileCondivisi/" + file['name'], "rb")
                 except Exception, e:
-                    output(self.output_lock, 'Error: ' + e.message + "\n")
+                    self.print_trigger.emit('File Error: ' + e.message + "\n", "11")
                 else:
                     tot_dim = os.stat("fileCondivisi/" + file['name']).st_size  # Calcolo delle dimesioni del file
                     n_chunks = int(tot_dim // 1024)  # Calcolo del numero di parti
@@ -164,8 +157,8 @@ class Peer_Server(threading.Thread):
                             6)  # Risposta alla richiesta di download, deve contenere ARET ed il numero di chunks che saranno inviati
 
                         conn.sendall(msg)
-
-                        output(self.output_lock, '\nUpload Message: ' + msg[0:4] + "\t" + msg[4:10])
+                        self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + msg[4:10], "12")
+                        output(self.output_lock, "\r\nUpload Started")
 
                         while len(buff) == chunk_size:  # Invio dei chunks
                             try:
@@ -177,21 +170,33 @@ class Peer_Server(threading.Thread):
                                                 'Uploading ' + fileFd.name)  # Stampa a video del progresso dell'upload
 
                                 buff = fileFd.read(chunk_size)  # Lettura chunk successivo
-                            except IOError:
-                                output(self.output_lock,
-                                       "Client_run-Error: Connection error due to the death of the peer!!!\n")
-                        if len(buff) != 0:  # Invio dell'eventuale resto, se più piccolo di chunk_size
+                            except socket.error, msg:
+                                self.print_trigger.emit("Connection Error: %s" % msg, "11")
+                            except Exception as e:
+                                self.print_trigger.emit('Error: ' + e.message, "11")
 
-                            msg = str(len(buff)).zfill(5) + buff
-                            conn.sendall(msg)
+                        if len(buff) != 0:  # Invio dell'eventuale resto, se più piccolo di chunk_size
+                            try:
+
+                                msg = str(len(buff)).zfill(5) + buff
+                                conn.sendall(msg)
+
+                            except socket.error, msg:
+                                self.print_trigger.emit("Connection Error: %s" % msg, "11")
+                            except Exception as e:
+                                self.print_trigger.emit('Error: ' + e.message, "11")
 
                         output(self.output_lock, "\r\nUpload Completed")
 
                         fileFd.close()  # Chiusura del file
+                    except socket.error, msg:
+                        self.print_trigger.emit("Connection Error: %s" % msg, "11")
+                    except Exception as e:
+                        self.print_trigger.emit('Error: ' + e.message, "11")
                     except EOFError:
-                        output(self.output_lock, "Client_run-Error: You have read a EOF char")
+                        self.print_trigger.emit("Error: You have read a EOF char", "11")
 
             else:
-                output(self.output_lock, "\n Command not recognized")
+                self.print_trigger.emit("Command not recognized", 11)
 
             cmd = conn.recv(self.size)

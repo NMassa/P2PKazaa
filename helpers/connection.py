@@ -12,9 +12,10 @@ class Connection:
     ipv4 = None
     port = None
     ipv6 = None
-    out_lck = None
+    print_trigger = None
+    print_mode = None
 
-    def __init__(self, ipv4, ipv6, port, out_lck):
+    def __init__(self, ipv4, ipv6, port, print_trigger, print_mode):
         """
         Costruttore della classe Connection
         """
@@ -22,7 +23,8 @@ class Connection:
         self.ipv4 = ipv4
         self.ipv6 = ipv6
         self.port = int(port)
-        self.out_lck = out_lck
+        self.print_trigger = print_trigger
+        self.print_mode = print_mode
 
     def connect(self):
         """
@@ -35,21 +37,20 @@ class Connection:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 self.socket.connect((self.ipv4, self.port))                                 # inizializzazione della connessione
-                output(self.out_lck, "Succesfully connected to: " + self.ipv4 + " " + str(self.port))
+                self.print_trigger.emit("Connected to: " + self.ipv4 + " " + str(self.port), self.print_mode + "2")
             except socket.error, msg:
-                output(self.out_lck, "Connection error ipv4!\nTerminated.\nSocket.error : %s" % msg)
-                #output(self.out_lck, self.ipv4 + str(self.port))
+                self.print_trigger.emit("Connection Error: %s" % msg, self.print_mode + "1")
 
         else:
             self.socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)                # creazione socket ipv6
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 self.socket.connect((self.ipv6, self.port))                                 # inizializzazione della connessione
-                output(self.out_lck, "Succesfully connected to: " + self.ipv6 + " " + str(self.port))
+                self.print_trigger.emit("Connected to: " + self.ipv6 + " " + str(self.port), self.print_mode + "2")
             except socket.error, msg:
-                output(self.out_lck, "Connection error ipv6!\nTerminated.\nSocket.error : %s" % msg)
-                #output(self.out_lck, self.ipv4 + str(self.port))
+                self.print_trigger.emit("Connection Error: %s" % msg, self.print_mode + "1")
 
+    '''
     def listen_v4(self):
         """
         Crea una socket TCP ipv4 in ascolto sull'indirizzo e porta specificati
@@ -79,3 +80,4 @@ class Connection:
             output(self.out_lck, "Listening on :" + self.ipv6 + str(self.port))
         except socket.error, msg:
             output(self.out_lck, "Connection error ipv6!\nTerminated.\nSocket.error : %s" % str(msg))
+    '''

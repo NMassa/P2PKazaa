@@ -10,7 +10,7 @@ from PyQt4 import QtGui, QtCore
 class Server(threading.Thread, QtCore.QThread):
     print_trigger = QtCore.pyqtSignal(str, int)
 
-    def __init__(self, is_supernode, parent = None):
+    def __init__(self, is_supernode, parent=None):
         QtCore.QThread.__init__(self, parent)
         threading.Thread.__init__(self)
         self.host = ''
@@ -28,19 +28,19 @@ class Server(threading.Thread, QtCore.QThread):
 
     def run(self):
 
-        self.print_trigger.emit("Start multithread server...", 10)
+        self.print_trigger.emit("Start multithread server...", "10")
         try:
             for item in self.port_dir, self.port_peer:
                 self.sock_lst.append(socket.socket(socket.AF_INET6, socket.SOCK_STREAM))
                 self.sock_lst[-1].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 self.sock_lst[-1].bind((self.host, item))
                 self.sock_lst[-1].listen(self.backlog)
-                print "Listening on " + str(item)
+                self.print_trigger.emit("Listening on " + str(item), "10")
         except socket.error, (value, message):
             if self.sock_lst[-1]:
                 self.sock_lst[-1].close()
                 self.sock_lst = self.sock_lst[:-1]
-            print 'Could not open socket: ' + message
+                self.print_trigger.emit("Could not open socket: " + message, "11")
             sys.exit(1)
 
         self.running = 1
@@ -53,30 +53,24 @@ class Server(threading.Thread, QtCore.QThread):
                         port = s.getsockname()[1]
 
                         if port == self.port_dir:
-
                             try:
                                 # handle the server socket
-                                c = Directory_Server(item.accept(), self.dbConnect, self.output_lock, config.my_ipv4,
+                                c = Directory_Server(item.accept(), self.dbConnect, self.output_lock, self.print_trigger, config.my_ipv4,
                                                      config.my_ipv6, config.my_port, config.ttl, self.is_supernode)
                                 c.start()
                                 self.threads.append(c)
                             except Exception as e:
-                                output(self.output_lock, "Server_run_socket: " + Exception + " / " + e.message)
+                                self.print_trigger.emit("Server Error: " + e.message, "11")
 
                         elif port == self.port_peer:
-
                             try:
                                 # handle the server socket
-                                c = Peer_Server(item.accept(), self.dbConnect, self.output_lock, config.my_ipv4,
+                                c = Peer_Server(item.accept(), self.dbConnect, self.output_lock, self.print_trigger, config.my_ipv4,
                                                 config.my_ipv6, config.my_port, config.ttl, self.is_supernode)
                                 c.start()
                                 self.threads.append(c)
                             except Exception as e:
-                                output(self.output_lock, "Server_run_socket: " + Exception + " / " + e.message)
-
-            for e in exceptready:
-                print "except"
-
+                                self.print_trigger.emit("Server Error: " + e.message, "11")
 
     def stop(self):
         # close all threads

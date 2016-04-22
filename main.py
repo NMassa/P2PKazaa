@@ -172,40 +172,65 @@ class Main(QtCore.QThread):
                                        sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
                         elif int_option == 3:
                             output(out_lck, "Select a supernode to log in ('r' to reload):")
+            if option is None:
+                output(out_lck, "Please select an option")
+            elif option == 'e':
+                output(out_lck, "Bye bye")
+                server.stop()
+                sys.exit()  # Interrompo l'esecuzione
+            else:
+                try:
+                    int_option = int(option)
+                except ValueError:
+                    output(out_lck, "A number is required")
+                else:
+                    if int_option == 1:
+                        # ricerca supernodi e salvataggio nel db
+                        client.search_supe()
+                    elif int_option == 2:
+                        output(out_lck, "Supernodes available:")
+                        supernodes = db.get_supernodes()
+                        for idx, sn in enumerate(supernodes):
+                            output(out_lck,
+                                   sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                    elif int_option == 3:
+                        output(out_lck, "Select a supernode to log in ('r' to reload, 'e' to exit):")
 
-                            supernodes = db.get_supernodes()
-                            for idx, sn in enumerate(supernodes):
-                                output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                        supernodes = db.get_supernodes()
+                        for idx, sn in enumerate(supernodes):
+                            output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
 
-                            int_option = None
-                            while int_option is None:
+                        int_option = None
+                        while int_option is None:
+                            try:
+                                option = raw_input()
+                            except SyntaxError:
+                                option = None
+
+                            if option is None:
+                                output(out_lck, "Please select an option")
+                            elif option == 'r':
+                                supernodes = db.get_supernodes()
+                                for idx, sn in enumerate(supernodes):
+                                    output(out_lck,
+                                           str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                            elif option == 'e':
+                                break
+                            else:
                                 try:
-                                    option = raw_input()
-                                except SyntaxError:
-                                    option = None
-
-                                if option is None:
-                                    output(out_lck, "Please select an option")
-                                elif option == 'r':
+                                    int_option = int(option)
+                                except ValueError:
+                                    output(out_lck, "A number is required")
+                                else:
                                     supernodes = db.get_supernodes()
                                     for idx, sn in enumerate(supernodes):
-                                        output(out_lck,
-                                               str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-                                else:
-                                    try:
-                                        int_option = int(option)
-                                    except ValueError:
-                                        output(out_lck, "A number is required")
-                                    else:
-                                        supernodes = db.get_supernodes()
-                                        for idx, sn in enumerate(supernodes):
-                                            if idx == int_option:
-                                                client.dir_ipv4 = sn['ipv4']
-                                                client.dir_ipv6 = sn['ipv6']
-                                                client.dir_port = 3000  # porta delle directory
+                                        if idx == int_option:
+                                            client.dir_ipv4 = sn['ipv4']
+                                            client.dir_ipv6 = sn['ipv6']
+                                            client.dir_port = 3000  # porta delle directory
 
-                                        # faccio il login
-                                        client.login()
+                                    # faccio il login
+                                    client.login()
 
             while client.session_id is not None:
                 #print_menu_top(out_lck)

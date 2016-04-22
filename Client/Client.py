@@ -44,9 +44,9 @@ class Client(object):
 
 
         # Searching for shareable files
-        for root, dirs, files in os.walk("../fileCondivisi"):
+        for root, dirs, files in os.walk("fileCondivisi"):
             for file in files:
-                file_md5 = hashfile(open("../fileCondivisi/" + file, 'rb'), hashlib.md5())
+                file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
                 new_file = SharedFile(file, file_md5)
                 self.files_list.append(new_file)
 
@@ -102,6 +102,8 @@ class Client(object):
 
         response_message = None
         try:
+            self.check_connection()
+
             self.directory.send(msg)                                                    # Richeista di logout
             output(self.out_lck, 'Message sent, waiting for response...')
 
@@ -165,6 +167,8 @@ class Client(object):
 
                             response_message = None
                             try:
+                                self.check_connection()
+
                                 self.directory.send(msg)                                # Richeista di aggiunta del file alla directory, deve contenere session id, md5 e nome del file
                                 output(self.out_lck, 'Message sent...')
 
@@ -178,6 +182,7 @@ class Client(object):
                     if not found:
                         output(self.out_lck, 'Option not available')
 
+    '''
     def super_share(self):
         """
             Supernodo: Aggiunge un file alla mia directory rendendolo disponibile agli altri peer per il download
@@ -213,6 +218,7 @@ class Client(object):
 
                     if not found:
                         output(self.out_lck, 'Option not available')
+    '''
 
     def remove(self):
         """
@@ -252,6 +258,8 @@ class Client(object):
 
                             response_message = None
                             try:
+                                self.check_connection()
+
                                 self.directory.send(msg)                                # Richiesta di rimozione del file dalla directory, deve contenere session id e md5
                                 output(self.out_lck, 'Message sent, waiting for response...')
 
@@ -265,6 +273,7 @@ class Client(object):
                     if not found:
                         output(self.out_lck, 'Option not available')
 
+    '''
     def super_remove(self):
         """
             Supernodo: Rimuove un file condiviso nella mia directory
@@ -301,6 +310,7 @@ class Client(object):
 
                     if not found:
                         output(self.out_lck, 'Option not available')
+    '''
 
     def search_file(self):
         """
@@ -323,6 +333,8 @@ class Client(object):
             self.print_trigger.emit('Find message: ' + msg, '00')
             response_message = None
             try:
+                self.check_connection()
+
                 self.directory.send(msg)                                                # Richeista di ricerca, deve contenere il session id ed il paramentro di ricerca (20 caratteri)
                 output(self.out_lck, 'Message sent, waiting for response...')
 
@@ -445,6 +457,7 @@ class Client(object):
                         else:
                             output(self.out_lck, "Unknown error, check your code!")
 
+    '''
     def super_search_file(self):
         """
             Esegue la ricerca di una parola tra i file condivisi nella directory degli altri supernodi.
@@ -546,7 +559,7 @@ class Client(object):
 
                 else:
                     output(self.out_lck, "No match found for the search term " + term)
-
+    '''
     def get_file(self, session_id, host_ipv4, host_ipv6, host_port, file):
         """
         Effettua il download di un file da un altro peer
@@ -598,7 +611,8 @@ class Client(object):
                         output(self.out_lck, 'Download started...')
                         self.print_trigger.emit('Download started...', '00')
 
-                    update_progress(i, n_chunks, 'Downloading ' + fout.name)  # Stampa a video del progresso del download
+                    update_progress(self.out_lck, i, n_chunks,
+                                           'Downloading ' + fout.name)  # Stampa a video del progresso del download
 
                     try:
                         chunk_length = recvall(download, 5)  # Ricezione dal peer la lunghezza della parte di file
@@ -649,4 +663,17 @@ class Client(object):
         #self.dbConnect.finalize_peer_query(pktId)
         #output(self.out_lck, "Search ended...")
 
+    def check_connection(self):
+        if not self.alive(self.directory):
+            c = connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port,
+                                      self.out_lck)  # Creazione connessione con la directory
+            c.connect()
+            self.directory = c.socket
 
+    def alive(self, socket):
+        try:
+            if socket.socket() != None:
+                return True
+        except Exception:
+            pass
+            return False

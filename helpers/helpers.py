@@ -19,9 +19,9 @@ def hashfile(file, hasher, blocksize=65536):
 def get_shareable_files():
     files_list = []
 
-    for root, dirs, files in os.walk("../shareable"):
+    for root, dirs, files in os.walk("fileCondivisi"):
         for file in files:
-            file_md5 = hashfile(open("../shareable/" + file, 'rb'), hashlib.md5())
+            file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
             files_list.append({
                 'name': file,
                 'md5': file_md5
@@ -142,26 +142,61 @@ def update_progress(lock, count, total, suffix=''):
 
 
 
-def sendTo(output_lock, ipv4, ipv6, port, msg):
+def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
 
-    # Non invio all'indirizzo da cui è arrivato il pacchetto
+    c = connection.Connection(ipv4, ipv6, port, print_trigger, print_mode)
+    c.connect()
     try:
-        output(output_lock, "\nConnecting to: " + ipv4 + "\t" + ipv6 + "\t" + port)
-
-        c = connection.Connection(ipv4, ipv6, port, output_lock)
-        c.connect()
         peerSock = c.socket
 
         peerSock.send(msg)
 
-        output(output_lock, "\nMessage sent : ")
-        output(output_lock, msg)
+        if msg[0:4] == "SUPE":
+            msg_pktId = msg[4:20]
+            msg_ipv4 = msg[20:35]
+            msg_ipv6 = msg[36:75]
+            msg_port = msg[75:80]
+            msg_ttl = msg[80:82]
+
+            print_trigger.emit("=> " + c.socket.getpeername() + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
+                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_ttl, print_mode + "2")
+
+        elif msg[0:4] == "ASUP":
+            msg_pktId = msg[4:20]
+            msg_ipv4 = msg[20:35]
+            msg_ipv6 = msg[36:75]
+            msg_port = msg[75:80]
+
+            print_trigger.emit("=> " + c.socket.getpeername() + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
+                               "\t" + msg_ipv6 + "\t" + msg_port, print_mode + "2")
+
+        elif msg[0:4] == "QUER":
+            msg_pktId = msg[4:20]
+            msg_ipv4 = msg[20:35]
+            msg_ipv6 = msg[36:75]
+            msg_port = msg[75:80]
+            msg_ttl = msg[80:82]
+            msg_searchStr = msg[82:102]
+
+            print_trigger.emit("=> " + c.socket.getpeername() + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
+                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_ttl + "\t" + msg_searchStr, print_mode + "2")
+
+        elif msg[0:4] == "AQUE":
+            msg_pktId = msg[4:20]
+            msg_ipv4 = msg[20:35]
+            msg_ipv6 = msg[36:75]
+            msg_port = msg[75:80]
+            msg_md5 = msg[80:112]
+            msg_fname = msg[112:212]
+
+            print_trigger.emit("=> " + c.socket.getpeername() + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
+                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_md5 + "\t" + msg_fname, print_mode + "2")
 
         peerSock.close()
     except IOError as e:
-        output(output_lock, 'send_near-Socket Error: ' + e.message)
+        print_trigger.emit('sendTo Error: ' + e.message, print_mode+"1")
     except socket.error, msg:
-        output(output_lock, 'send_near-Socket Error: ' + str(msg))
-
+        print_trigger.emit('sendTo Error: ' + str(msg), print_mode+"1")
     except Exception as e:
-        output(output_lock, 'send_near-Error: ' + e.message)
+        print_trigger.emit('sendTo Error: ' + e.message, print_mode+"1")
+

@@ -26,16 +26,14 @@ class Ui_MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
         self.setObjectName(_fromUtf8("MainWindow"))
-        self.resize(1500, 1250)
-        self.setMinimumSize(QtCore.QSize(1500, 900))
-        self.setMaximumSize(QtCore.QSize(1500, 900))
+        self.resize(1360, 450)
+        self.setMaximumSize(QtCore.QSize(1360, 450))
         self.centralwidget = QtGui.QWidget(self)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
         self.centralwidget.setSizePolicy(sizePolicy)
-        self.centralwidget.setMinimumSize(QtCore.QSize(1000, 1200))
         self.centralwidget.setMaximumSize(QtCore.QSize(1000, 1200))
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.centralwidget)
@@ -82,23 +80,23 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.label_1.setText(_translate("MainWindow", "Server", None))
 
     def print_on_main_panel(self, message, color):
-        if color == 11:
-            #self.main_panel.setStyleSheet("QTextEdit {color:red}")
-            self.server.setTextColor(QtGui.QColor('red'))
-            self.server.append(message)
-        if color == 10:
-            # self.main_panel.setStyleSheet("QTextEdit {color:red}")
+        if color == "10":
             self.server.setTextColor(QtGui.QColor('black'))
             self.server.append(message)
-        if color == 0:
-            #self.main_panel.setStyleSheet("QTextEdit {color:blue}")
+        elif color == "11":
+            self.server.setTextColor(QtGui.QColor('red'))
+            self.server.append(message)
+        elif color == "12":
+            self.server.setTextColor(QtGui.QColor('green'))
+            self.server.append(message)
+        elif color == "00":
             self.client.setTextColor(QtGui.QColor('black'))
-            #self.main_panel.append(message)
             self.client.append(message)
-        if color == 1:
-            # self.main_panel.setStyleSheet("QTextEdit {color:blue}")
+        elif color == "01":
             self.client.setTextColor(QtGui.QColor('red'))
-            # self.main_panel.append(message)
+            self.client.append(message)
+        elif color == "02":
+            self.client.setTextColor(QtGui.QColor('green'))
             self.client.append(message)
 
 '''
