@@ -608,9 +608,9 @@ class Client(object):
                 sendTo(self.out_lck, neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
         output(self.out_lck, "Collecting responses...")
-        output_timer(self.out_lck,5)
+        #output_timer(self.out_lck,5)
 
-        self.dbConnect.finalize_peer_query(pktId)
-        output(self.out_lck, "Search ended...")
+        #self.dbConnect.finalize_peer_query(pktId)
+        #output(self.out_lck, "Search ended...")
 
 

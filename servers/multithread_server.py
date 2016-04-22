@@ -69,6 +69,10 @@ class Server(threading.Thread):
                             except Exception as e:
                                 output(self.output_lock, "Server_run_socket: " + Exception + " / " + e.message)
 
+            for e in exceptready:
+                print "except"
+
+
     def stop(self):
         # close all threads
 

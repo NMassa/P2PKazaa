@@ -46,15 +46,15 @@ def main():
     server.start()
 
     client = Client(config.my_ipv4, config.my_ipv6, int(config.my_port), None, None, None, config.ttl, db, out_lck)
+    if supernode_mode:
+        while client.session_id is None:
+            #print_menu_top(out_lck)
+            output(out_lck, "## Select one of the following options ('e' to exit): ##")
+            output(out_lck, "## 1: Search supernodes                               ##")
+            output(out_lck, "## 2: View supernodes                                 ##")
+            output(out_lck, "## 3: Log in (to self)                                ##")
 
-    while True:
-        #print_menu_top(out_lck)
-        output(out_lck, "## Select one of the following options ('e' to exit): ##")
-        output(out_lck, "## 1: Search supernodes                               ##")
-        #print_menu_bottom(out_lck)
-
-        int_option = None
-        while int_option is None:
+            int_option = None
             try:
                 option = raw_input()
             except SyntaxError:
@@ -71,144 +71,169 @@ def main():
                     int_option = int(option)
                 except ValueError:
                     output(out_lck, "A number is required")
+                else:
+                    if int_option == 1:
+                        # ricerca supernodi e salvataggio nel db
+                        client.search_supe()
+                    elif int_option == 2:
+                        output(out_lck, "Supernodes available:")
+                        supernodes = db.get_supernodes()
+                        for idx, sn in enumerate(supernodes):
+                            output(out_lck,
+                                   sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                    elif int_option == 3:
+                        client.dir_ipv4 = "127.0.0.1"
+                        client.dir_ipv6 = "::1"
+                        client.dir_port = 3000
+                        client.login()
 
-        if int_option != 1:
-            output(out_lck, "Option " + str(option) + " not available")
-        else:
-            # TODO: ricerca dei supernodi tramite i vicini nella tabella neighbor, i supernodi vanno salvati nella tabella neighbor con is_supernode = true
-            client.search_supe()
+                        while client.session_id is not None:
+                            # print_menu_top(out_lck)
+                            output(out_lck, "## 1: Add file (to self)                              ##")
+                            output(out_lck, "## 2: Delete file (from self)                         ##")
+                            output(out_lck, "## 3: Search file                                     ##")
+                            output(out_lck, "## 4: Log out                                         ##")
+                            # print_menu_bottom(out_lck)
 
-            # una volta trovato almeno un supernodo
-            if supernode_mode:
-                # Fake session_id per il supernodo
-                client.session_id = "$"
+                            int_option = None
+                            try:
+                                option = raw_input()
+                            except SyntaxError:
+                                option = None
 
-                while True:
-                    #print_menu_top(out_lck)
-                    output(out_lck, "## Select one of the following options ('e' to exit): ##")
-                    output(out_lck, "## 1: Search supernodes                               ##")
-                    output(out_lck, "## 2: View supernodes                                 ##")
-                    output(out_lck, "## 3: Add file (to myself)                            ##")
-                    output(out_lck, "## 4: Delete file (from myself)                       ##")
-                    output(out_lck, "## 5: Search file                                     ##")
-                    #print_menu_bottom(out_lck)
-
-                    int_option = None
-                    try:
-                        option = raw_input()
-                    except SyntaxError:
-                        option = None
-
-                    if option is None:
-                        output(out_lck, "Please select an option")
-                    elif option == 'e':
-                        output(out_lck, "Bye bye")
-                        server.stop()
-                        sys.exit()  # Interrompo l'esecuzione
-                    else:
-                        try:
-                            int_option = int(option)
-                        except ValueError:
-                            output(out_lck, "A number is required")
-                        else:
-                            if int_option == 1:
-                                # ricerca supernodi e salvataggio nel db
-                                client.search_supe()
-                            elif int_option == 2:
-                                output(out_lck, "Supernodes available:")
-                                supernodes = db.get_supernodes()
-                                for idx, sn in enumerate(supernodes):
-                                    output(out_lck,
-                                           sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-
-                            elif int_option == 3:
-                                # scelgo un file dalla cartella e lo aggiungo alla directory
-                                client.super_share()
-                            elif int_option == 4:
-                                # scelgo un file dalla directory (tra i miei) e lo rimuovo
-                                client.super_remove()
-                            elif int_option == 5:
-                                # creo una query e la invio agli altri supernodi
-                                client.super_search_file()
+                            if option is None:
+                                output(out_lck, "Please select an option")
                             else:
-                                output(out_lck, "Option " + str(int_option) + " not available")
+                                try:
+                                    int_option = int(option)
+                                except ValueError:
+                                    output(out_lck, "A number is required")
+                                else:
+                                    if int_option == 1:
+                                        # scelgo un file dalla cartella e lo aggiungo alla directory
+                                        client.share()
+                                    elif int_option == 2:
+                                        # scelgo un file dalla directory (tra i miei) e lo rimuovo
+                                        client.remove()
+                                    elif int_option == 3:
+                                        # creo una query e la invio agli altri supernodi
+                                        client.search_file()
+                                    elif int_option == 4:
+                                        client.logout()
+                                    else:
+                                        output(out_lck, "Option " + str(int_option) + " not available")
 
+                    else:
+                        output(out_lck, "Option " + str(int_option) + " not available")
+    else:
+        while client.session_id is None:
+            # print_menu_top(out_lck)
+            output(out_lck, "## Select one of the following options ('e' to exit): ##")
+            output(out_lck, "## 1: Search supernodes                               ##")
+            output(out_lck, "## 2: View supernodes                                 ##")
+            output(out_lck, "## 3: Select supernode and log in                     ##")
+
+            int_option = None
+            try:
+                option = raw_input()
+            except SyntaxError:
+                option = None
+
+            if option is None:
+                output(out_lck, "Please select an option")
+            elif option == 'e':
+                output(out_lck, "Bye bye")
+                server.stop()
+                sys.exit()  # Interrompo l'esecuzione
             else:
-                # se trovo almeno un supernodo faccio scegliere quale utilizzare per fare il login
-                output(out_lck, "Select a supernode to log in ('r' to reload):")
+                try:
+                    int_option = int(option)
+                except ValueError:
+                    output(out_lck, "A number is required")
+                else:
+                    if int_option == 1:
+                        # ricerca supernodi e salvataggio nel db
+                        client.search_supe()
+                    elif int_option == 2:
+                        output(out_lck, "Supernodes available:")
+                        supernodes = db.get_supernodes()
+                        for idx, sn in enumerate(supernodes):
+                            output(out_lck,
+                                   sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                    elif int_option == 3:
+                        output(out_lck, "Select a supernode to log in ('r' to reload):")
 
-
-                supernodes = db.get_supernodes()
-                for idx, sn in enumerate(supernodes):
-                    output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-
-                int_option = None
-                while int_option is None:
-                    try:
-                        option = raw_input()
-                    except SyntaxError:
-                        option = None
-
-                    if option is None:
-                        output(out_lck, "Please select an option")
-                    elif option == 'r':
                         supernodes = db.get_supernodes()
                         for idx, sn in enumerate(supernodes):
                             output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-                    else:
-                        try:
-                            int_option = int(option)
-                        except ValueError:
-                            output(out_lck, "A number is required")
-                        else:
-                            supernodes = db.get_supernodes()
-                            for idx, sn in enumerate(supernodes):
-                                if idx == int_option:
-                                    client.dir_ipv4 = sn['ipv4']
-                                    client.dir_ipv6 = sn['ipv6']
-                                    client.dir_port = int(sn['port'])
 
-                            # faccio il login
-                            client.login()
-                            #client.session_id = "269d4afsfdaf645as1"
+                        int_option = None
+                        while int_option is None:
+                            try:
+                                option = raw_input()
+                            except SyntaxError:
+                                option = None
 
-                            while client.session_id is not None:
-                                #print_menu_top(out_lck)
-                                output(out_lck, "## Select one of the following options:               ##")
-                                output(out_lck, "## 1: Add file                                        ##")
-                                output(out_lck, "## 2: Delete file                                     ##")
-                                output(out_lck, "## 3: Search file                                     ##")
-                                output(out_lck, "## 4: Log out and exit                                ##")
-                                #print_menu_bottom(out_lck)
-
-                                int_option = None
+                            if option is None:
+                                output(out_lck, "Please select an option")
+                            elif option == 'r':
+                                supernodes = db.get_supernodes()
+                                for idx, sn in enumerate(supernodes):
+                                    output(out_lck,
+                                           str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                            else:
                                 try:
-                                    option = raw_input()
-                                except SyntaxError:
-                                    option = None
-
-                                if option is None:
-                                    output(out_lck, "Please select an option")
+                                    int_option = int(option)
+                                except ValueError:
+                                    output(out_lck, "A number is required")
                                 else:
-                                    try:
-                                        int_option = int(option)
-                                    except ValueError:
-                                        output(out_lck, "A number is required")
-                                    else:
-                                        if int_option == 1:
-                                            # scelgo un file dalla cartella e lo aggiungo alla directory
-                                            client.share()
-                                        elif int_option == 2:
-                                            # scelgo un file dalla directory (tra i miei) e lo rimuovo
-                                            client.remove()
-                                        elif int_option == 3:
-                                            # creo una query e la invio agli altri supernodi
-                                            client.search_file()
-                                        elif int_option == 4:
-                                            output(out_lck, "Logging out...0")
-                                            client.logout()
-                                        else:
-                                            output(out_lck, "Option " + str(int_option) + " not available")
+                                    supernodes = db.get_supernodes()
+                                    for idx, sn in enumerate(supernodes):
+                                        if idx == int_option:
+                                            client.dir_ipv4 = sn['ipv4']
+                                            client.dir_ipv6 = sn['ipv6']
+                                            client.dir_port = 3000  # porta delle directory
+
+                                    # faccio il login
+                                    client.login()
+
+        while client.session_id is not None:
+            #print_menu_top(out_lck)
+            output(out_lck, "## Select one of the following options:               ##")
+            output(out_lck, "## 1: Add file                                        ##")
+            output(out_lck, "## 2: Delete file                                     ##")
+            output(out_lck, "## 3: Search file                                     ##")
+            output(out_lck, "## 4: Log out                                         ##")
+            #print_menu_bottom(out_lck)
+
+            int_option = None
+            try:
+                option = raw_input()
+            except SyntaxError:
+                option = None
+
+            if option is None:
+                output(out_lck, "Please select an option")
+            else:
+                try:
+                    int_option = int(option)
+                except ValueError:
+                    output(out_lck, "A number is required")
+                else:
+                    if int_option == 1:
+                        # scelgo un file dalla cartella e lo aggiungo alla directory
+                        client.share()
+                    elif int_option == 2:
+                        # scelgo un file dalla directory (tra i miei) e lo rimuovo
+                        client.remove()
+                    elif int_option == 3:
+                        # creo una query e la invio agli altri supernodi
+                        client.search_file()
+                    elif int_option == 4:
+                        output(out_lck, "Logging out...")
+                        client.logout()
+                    else:
+                        output(out_lck, "Option " + str(int_option) + " not available")
 
 if __name__ == "__main__":
     main()
