@@ -655,7 +655,7 @@ class Client(object):
         if (len(neighbors) > 0):
             # “SUPE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B]
             for neighbor in neighbors:
-                sendTo(self.out_lck, neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                sendTo(self.print_trigger, "0", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
 
         output(self.out_lck, "Collecting responses...")
         #output_timer(self.out_lck,5)
