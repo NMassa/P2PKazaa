@@ -31,10 +31,8 @@ class Directory_Server(threading.Thread):
 
     def run(self):
         conn = self.client
-
-        while True:
-            cmd = conn.recv(self.size)
-
+        cmd = conn.recv(self.size)
+        while len(cmd) > 0:
             if cmd[:4] == 'LOGI':
                 # TODO: Stampare su GUI
                 # “LOGI”[4B].IPP2P[55B].PP2P[5B]
@@ -128,3 +126,5 @@ class Directory_Server(threading.Thread):
                         conn.send('AFIN000')
             else:
                 output(self.output_lock, "\n Command not recognized")
+
+            cmd = conn.recv(self.size)

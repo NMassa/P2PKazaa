@@ -30,10 +30,8 @@ class Peer_Server(threading.Thread):
 
     def run(self):
         conn = self.client
-
-        while True:
-            cmd = conn.recv(self.size)
-
+        cmd = conn.recv(self.size)
+        while len(cmd) > 0:
             if cmd[:4] == 'SUPE':
                 # TODO: Stampare su GUI
 
@@ -195,3 +193,5 @@ class Peer_Server(threading.Thread):
 
             else:
                 output(self.output_lock, "\n Command not recognized")
+
+            cmd = conn.recv(self.size)
