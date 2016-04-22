@@ -19,9 +19,9 @@ def hashfile(file, hasher, blocksize=65536):
 def get_shareable_files():
     files_list = []
 
-    for root, dirs, files in os.walk("shareable"):
+    for root, dirs, files in os.walk("../shareable"):
         for file in files:
-            file_md5 = hashfile(open("shareable/" + file, 'rb'), hashlib.md5())
+            file_md5 = hashfile(open("../shareable/" + file, 'rb'), hashlib.md5())
             files_list.append({
                 'name': file,
                 'md5': file_md5

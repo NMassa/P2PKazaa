@@ -40,13 +40,13 @@ class Client(object):
         self.dbConnect = database
         self.out_lck = out_lck
         self.print_trigger = print_trigger
-        self.print_trigger.emit("Start client:", 0)
+        #self.print_trigger.emit("Start client:", 00)
 
 
         # Searching for shareable files
-        for root, dirs, files in os.walk("fileCondivisi"):
+        for root, dirs, files in os.walk("../fileCondivisi"):
             for file in files:
-                file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
+                file_md5 = hashfile(open("../fileCondivisi/" + file, 'rb'), hashlib.md5())
                 new_file = SharedFile(file, file_md5)
                 self.files_list.append(new_file)
 
@@ -57,7 +57,8 @@ class Client(object):
 
         output(self.out_lck, "Logging in...")
         msg = 'LOGI' + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port).zfill(5)
-        output(self.out_lck, 'Login message: ' + msg)
+        #output(self.out_lck, 'Login message: ' + msg)
+        self.print_trigger.emit('Login message: ' + msg, '00')
 
         response_message = None
         try:
@@ -69,11 +70,14 @@ class Client(object):
             self.directory.send(msg)                                                    # Richiesta di login
             output(self.out_lck, 'Message sent, waiting for response...')
             response_message = self.directory.recv(20)                                  # Risposta della directory, deve contenere ALGI e il session id
-            output(self.out_lck, 'Directory responded: ' + response_message)
+            #output(self.out_lck, 'Directory responded: ' + response_message)
+            self.print_trigger.emit('Directory responded: ' + response_message, '00')
         except socket.error, msg:
-            output(self.out_lck, 'Socket Error: ' + str(msg))
+            #output(self.out_lck, 'Socket Error: ' + str(msg))
+            self.print_trigger.emit('Socket Error: ' + str(msg), '01')
         except Exception as e:
-            print 'Error: ' + e.message
+            #print 'Error: ' + e.message
+            self.print_trigger.emit('Error: ' + e.message, '01')
         else:
             if response_message is None:
                 output(self.out_lck, 'No response from directory. Login failed')
@@ -84,6 +88,7 @@ class Client(object):
                 else:
                     output(self.out_lck, 'Session ID assigned by the directory: ' + self.session_id)
                     output(self.out_lck, 'Login completed')
+                    self.print_trigger.emit('Login completed', '00')
 
     def logout(self):
         """
@@ -92,7 +97,8 @@ class Client(object):
 
         output(self.out_lck, 'Logging out...')
         msg = 'LOGO' + self.session_id
-        output(self.out_lck, 'Logout message: ' + msg)
+        #output(self.out_lck, 'Logout message: ' + msg)
+        self.print_trigger.emit('Logout message: ' + msg, '00')
 
         response_message = None
         try:
@@ -102,9 +108,11 @@ class Client(object):
             response_message = self.directory.recv(7)                                   # Risposta della directory, deve contenere ALGO e il numero di file che erano stati condivisi
             output(self.out_lck, 'Directory responded: ' + response_message)
         except socket.error, msg:
-            output(self.out_lck, 'Socket Error: ' + str(msg))
+            #output(self.out_lck, 'Socket Error: ' + str(msg))
+            self.print_trigger.emit('Socket Error: ' + str(msg), '01')
         except Exception as e:
-            output(self.out_lck, 'Error: ' + e.message)
+            #output(self.out_lck, 'Error: ' + e.message)
+            self.print_trigger.emit('Error: ' + e.message, '01')
         else:
             if response_message is None:
                 output(self.out_lck, 'No response from directory. Login failed')
@@ -116,8 +124,10 @@ class Client(object):
 
                 self.directory.close()                                                  # Chiusura della connessione
                 output(self.out_lck, 'Logout completed')
+                self.print_trigger.emit('Logout completed', '00')
             else:
                 output(self.out_lck, 'Error: unknown response from directory.\n')
+                self.print_trigger.emit('Error: unknown response from directory.', '01')
 
     def share(self):
         """
@@ -159,9 +169,11 @@ class Client(object):
                                 output(self.out_lck, 'Message sent...')
 
                             except socket.error, msg:
-                                output(self.out_lck, 'Socket Error: ' + str(msg))
+                                #output(self.out_lck, 'Socket Error: ' + str(msg))
+                                self.print_trigger.emit('Socket Error: ' + str(msg), '00')
                             except Exception as e:
-                                output(self.out_lck, 'Error: ' + e.message)
+                                #output(self.out_lck, 'Error: ' + e.message)
+                                self.print_trigger.emit('Error: ' + e.message, '01')
 
                     if not found:
                         output(self.out_lck, 'Option not available')
@@ -235,7 +247,8 @@ class Client(object):
 
                             output(self.out_lck, "Removing file " + file.name)
                             msg = 'DEFF' + self.session_id + file.md5
-                            output(self.out_lck, 'Delete message: ' + msg)
+                            #output(self.out_lck, 'Delete message: ' + msg)
+                            self.print_trigger.emit('Delete message: ' + msg, '00')
 
                             response_message = None
                             try:
@@ -243,9 +256,11 @@ class Client(object):
                                 output(self.out_lck, 'Message sent, waiting for response...')
 
                             except socket.error, msg:
-                                output(self.out_lck, 'Socket Error: ' + str(msg))
+                                #output(self.out_lck, 'Socket Error: ' + str(msg))
+                                self.print_trigger.emit('Socket Error: ' + str(msg), '00')
                             except Exception as e:
-                                output(self.out_lck, 'Error: ' + e.message)
+                                #output(self.out_lck, 'Error: ' + e.message)
+                                self.print_trigger.emit('Error: ' + e.message, '01')
 
                     if not found:
                         output(self.out_lck, 'Option not available')
@@ -304,7 +319,8 @@ class Client(object):
             output(self.out_lck, "Searching files that match: " + term)
 
             msg = 'FIND' + self.session_id + term.ljust(20)
-            output(self.out_lck, 'Find message: ' + msg)
+            #output(self.out_lck, 'Find message: ' + msg)
+            self.print_trigger.emit('Find message: ' + msg, '00')
             response_message = None
             try:
                 self.directory.send(msg)                                                # Richeista di ricerca, deve contenere il session id ed il paramentro di ricerca (20 caratteri)
@@ -312,22 +328,28 @@ class Client(object):
 
                 response_message = self.directory.recv(4)                               # Risposta della directory, deve contenere AFIN seguito dal numero di identificativi md5
                                                                                         # disponibili e dalla lista di file e peer che li hanno condivisi
-                output(self.out_lck, 'Directory responded: ' + response_message)
+                #output(self.out_lck, 'Directory responded: ' + response_message)
+                self.print_trigger.emit('Directory responded: ' + response_message, '00')
             except socket.error, msg:
-                output(self.out_lck, 'Socket Error: ' + str(msg))
+                #output(self.out_lck, 'Socket Error: ' + str(msg))
+                self.print_trigger.emit('Socket Error: ' + str(msg), '00')
             except Exception as e:
-                output(self.out_lck, 'Error: ' + e.message)
+                #output(self.out_lck, 'Error: ' + e.message)
+                self.print_trigger.emit('Error: ' + e.message, '01')
 
             if not response_message == 'AFIN':
                 output(self.out_lck, 'Error: unknown response from directory.\n')
+                self.print_trigger.emit('Error: unknown response from directory.', '01')
             else:
                 idmd5 = None
                 try:
                     idmd5 = self.directory.recv(3)                                      # Numero di identificativi md5
                 except socket.error as e:
-                    output(self.out_lck, 'Socket Error: ' + e.message)
+                    #output(self.out_lck, 'Socket Error: ' + e.message)
+                    self.print_trigger.emit('Socket Error: ' + str(msg), '00')
                 except Exception as e:
-                    output(self.out_lck, 'Error: ' + e.message)
+                    #output(self.out_lck, 'Error: ' + e.message)
+                    self.print_trigger.emit('Error: ' + e.message, '01')
 
                 if idmd5 is None:
                     output(self.out_lck, 'Error: idmd5 is blank')
@@ -360,9 +382,11 @@ class Client(object):
                                     available_files.append(SharedFile(file_i_name, file_i_md5, file_owners))
 
                             except socket.error, msg:
-                                output(self.out_lck, 'Socket Error: ' + str(msg))
+                                #output(self.out_lck, 'Socket Error: ' + str(msg))
+                                self.print_trigger.emit('Socket Error: ' + str(msg), '00')
                             except Exception as e:
-                                output(self.out_lck, 'Error: ' + e.message)
+                                #output(self.out_lck, 'Error: ' + e.message)
+                                self.print_trigger.emit('Error: ' + e.message, '01')
 
                             if len(available_files) == 0:
                                 output(self.out_lck, "No results found for search term: " + term)
@@ -415,8 +439,8 @@ class Client(object):
 
                                 for idx2, owner in enumerate(file_to_download.owners):  # Download del file selezionato
                                     if selected_peer == idx2:
-                                        output(self.out_lck,
-                                               "Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port)
+                                        output(self.out_lck,"Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port)
+                                        self.print_trigger.emit("Downloading file from: " + owner.ipv4 + " | " + owner.ipv6 + " " + owner.port, '00')
                                         self.get_file(self.session_id, owner.ipv4, owner.ipv6, owner.port, file_to_download)
                         else:
                             output(self.out_lck, "Unknown error, check your code!")
@@ -445,7 +469,9 @@ class Client(object):
             self.dbConnect.insert_file_query(pktId, term)
 
             msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + str(self.my_port).zfill(5) + str(self.ttl).zfill(2) + term.ljust(20)
-            output(self.out_lck, 'Query message: ' + msg)
+            #output(self.out_lck, 'Query message: ' + msg)
+            self.print_trigger.emit('Query message: ' + msg, '00')
+
             supernodes = self.dbConnect.get_supernodes()
 
             if (len(supernodes) > 0):
@@ -513,6 +539,7 @@ class Client(object):
                         if selected_peer == idx2:
                             output(self.out_lck,
                                    "Downloading file from: " + owner['ipv4'] + " | " + owner['ipv6'] + " | " + owner['port'])
+                            self.print_trigger.emit("Downloading file from: " + owner['ipv4'] + " | " + owner['ipv6'] + " | " + owner['port'], '00')
 
                             f = SharedFile(file_to_download['name'], file_to_download['md5'], file_to_download['peers'])
                             self.get_file(self.session_id, owner['ipv4'], owner['ipv6'], owner['port'], f)
@@ -543,50 +570,56 @@ class Client(object):
         download = c.socket
 
         msg = 'RETR' + file.md5
-        output(self.out_lck, 'Download Message: ' + msg)
+        #output(self.out_lck, 'Download Message: ' + msg)
+        self.print_trigger.emit('Download Message: ' + msg, '00')
         try:
             download.send(msg)  # Richiesta di download al peer
             output(self.out_lck, 'Message sent, waiting for response...')
             response_message = download.recv(
                 10)  # Risposta del peer, deve contenere il codice ARET seguito dalle parti del file
         except socket.error as e:
-            output(self.out_lck, 'Error: ' + e.message)
+            #output(self.out_lck, 'Error: ' + e.message)
+            self.print_trigger.emit('Error: ' + e.message, '01')
         except Exception as e:
-            output(self.out_lck, 'Error: ' + e.message)
+            #output(self.out_lck, 'Error: ' + e.message)
+            self.print_trigger.emit('Error: ' + e.message, '01')
         else:
             if response_message[:4] == 'ARET':
                 n_chunks = response_message[4:10]  # Numero di parti del file da scaricare
                 # tmp = 0
 
                 filename = file.name
-                fout = open('received/' + filename,
-                            "wb")  # Apertura di un nuovo file in write byte mode (sovrascrive se già esistente)
+                fout = open('../received/' + filename, "wb")  # Apertura di un nuovo file in write byte mode (sovrascrive se già esistente)
 
                 n_chunks = int(str(n_chunks).lstrip('0'))  # Rimozione gli 0 dal numero di parti e converte in intero
 
                 for i in range(0, n_chunks):
                     if i == 0:
                         output(self.out_lck, 'Download started...')
+                        self.print_trigger.emit('Download started...', '00')
 
-                    update_progress(i, n_chunks,
-                                            'Downloading ' + fout.name)  # Stampa a video del progresso del download
+                    update_progress(i, n_chunks, 'Downloading ' + fout.name)  # Stampa a video del progresso del download
 
                     try:
                         chunk_length = recvall(download, 5)  # Ricezione dal peer la lunghezza della parte di file
                         data = recvall(download, int(chunk_length))  # Ricezione dal peer la parte del file
                         fout.write(data)  # Scrittura della parte su file
                     except socket.error as e:
-                        output(self.out_lck, 'Socket Error: ' + e.message)
+                        #output(self.out_lck, 'Socket Error: ' + e.message)
+                        self.print_trigger.emit('Socket Error: ' + e.message, '01')
                         break
                     except IOError as e:
-                        output(self.out_lck, 'IOError: ' + e.message)
+                        #output(self.out_lck, 'IOError: ' + e.message)
+                        self.print_trigger.emit('IOError: ' + e.message, '01')
                         break
                     except Exception as e:
-                        output(self.out_lck, 'Error: ' + e.message)
+                        #output(self.out_lck, 'Error: ' + e.message)
+                        self.print_trigger.emit('Error: ' + e.message, '01')
                         break
                 fout.close()  # Chiusura file a scrittura ultimata
 
                 output(self.out_lck, '\nDownload completed')
+                self.print_trigger.emit('Download completed', '00')
                 output(self.out_lck, 'Checking file integrity...')
                 downloaded_md5 = hashfile(open(fout.name, 'rb'),
                                                   hashlib.md5())  # Controllo dell'integrità del file appena scarcato tramite md5
@@ -600,8 +633,8 @@ class Client(object):
     def search_supe(self):
         pktId = id_generator(16)
         msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5) + str(self.ttl).zfill(2)
-
-        output(self.out_lck, 'Search supernode message: ' + msg)
+        #output(self.out_lck, 'Search supernode message: ' + msg)
+        self.print_trigger.emit('Search supernode message: ' + msg, '00')
 
         # Invio a TUTTI i vicini
         neighbors = self.dbConnect.get_neighbors()
