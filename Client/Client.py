@@ -63,7 +63,7 @@ class Client(object):
         response_message = None
         try:
             self.directory = None
-            c = connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port, self.out_lck)      # Creazione connessione con la directory
+            c = connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port, self.print_trigger, "0")      # Creazione connessione con la directory
             c.connect()
             self.directory = c.socket
 
@@ -578,7 +578,7 @@ class Client(object):
         :type directory: object
         """
 
-        c = connection.Connection(host_ipv4, host_ipv6, host_port, self.out_lck)  # Inizializzazione della connessione verso il peer
+        c = connection.Connection(host_ipv4, host_ipv6, host_port, self.print_trigger, "0")  # Inizializzazione della connessione verso il peer
         c.connect()
         download = c.socket
 
@@ -666,7 +666,7 @@ class Client(object):
     def check_connection(self):
         if not self.alive(self.directory):
             c = connection.Connection(self.dir_ipv4, self.dir_ipv6, self.dir_port,
-                                      self.out_lck)  # Creazione connessione con la directory
+                                      self.print_trigger, "0")  # Creazione connessione con la directory
             c.connect()
             self.directory = c.socket
 

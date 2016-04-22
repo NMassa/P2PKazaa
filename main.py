@@ -13,9 +13,9 @@ sys.path.insert(1, '/Users/stefano/Desktop/P2Pkazaa')
 
 
 class Main(QtCore.QThread):
-    print_trigger = QtCore.pyqtSignal(str, int)
+    print_trigger = QtCore.pyqtSignal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self,parent=None):
         super(Main, self).__init__(parent)
 
     def run(self):
@@ -50,12 +50,14 @@ class Main(QtCore.QThread):
         else:
             output(out_lck, "YOU ARE A PEER!")
 
+
         # Avvio il server in ascolto sulle porte 80 e 6000
         server = multithread_server.Server(supernode_mode)
-        server.print_trigger.connect(main_window.print_on_main_panel)
+        server.print_trigger.connect(mainwindow.print_on_main_panel)
         server.start()
 
         client = Client(config.my_ipv4, config.my_ipv6, int(config.my_port), None, None, None, config.ttl, db, out_lck, self.print_trigger)
+
         if supernode_mode:
             while client.session_id is None:
                 #print_menu_top(out_lck)
@@ -171,66 +173,44 @@ class Main(QtCore.QThread):
                                 output(out_lck,
                                        sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
                         elif int_option == 3:
-                            output(out_lck, "Select a supernode to log in ('r' to reload):")
-            if option is None:
-                output(out_lck, "Please select an option")
-            elif option == 'e':
-                output(out_lck, "Bye bye")
-                server.stop()
-                sys.exit()  # Interrompo l'esecuzione
-            else:
-                try:
-                    int_option = int(option)
-                except ValueError:
-                    output(out_lck, "A number is required")
-                else:
-                    if int_option == 1:
-                        # ricerca supernodi e salvataggio nel db
-                        client.search_supe()
-                    elif int_option == 2:
-                        output(out_lck, "Supernodes available:")
-                        supernodes = db.get_supernodes()
-                        for idx, sn in enumerate(supernodes):
-                            output(out_lck,
-                                   sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-                    elif int_option == 3:
-                        output(out_lck, "Select a supernode to log in ('r' to reload, 'e' to exit):")
+                            output(out_lck, "Select a supernode to log in ('r' to reload, 'e' to exit):")
 
-                        supernodes = db.get_supernodes()
-                        for idx, sn in enumerate(supernodes):
-                            output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                            supernodes = db.get_supernodes()
+                            for idx, sn in enumerate(supernodes):
+                                output(out_lck, str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
 
-                        int_option = None
-                        while int_option is None:
-                            try:
-                                option = raw_input()
-                            except SyntaxError:
-                                option = None
-
-                            if option is None:
-                                output(out_lck, "Please select an option")
-                            elif option == 'r':
-                                supernodes = db.get_supernodes()
-                                for idx, sn in enumerate(supernodes):
-                                    output(out_lck,
-                                           str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
-                            elif option == 'e':
-                                break
-                            else:
+                            int_option = None
+                            while int_option is None:
                                 try:
-                                    int_option = int(option)
-                                except ValueError:
-                                    output(out_lck, "A number is required")
-                                else:
+                                    option = raw_input()
+                                except SyntaxError:
+                                    option = None
+
+                                if option is None:
+                                    output(out_lck, "Please select an option")
+                                elif option == 'r':
                                     supernodes = db.get_supernodes()
                                     for idx, sn in enumerate(supernodes):
-                                        if idx == int_option:
-                                            client.dir_ipv4 = sn['ipv4']
-                                            client.dir_ipv6 = sn['ipv6']
-                                            client.dir_port = 3000  # porta delle directory
+                                        output(out_lck,
+                                               str(idx) + ":\t" + sn['ipv4'] + "\t" + sn['ipv6'] + "\t" + sn['port'])
+                                elif option == 'e':
+                                    break
+                                else:
+                                    try:
+                                        int_option = int(option)
+                                    except ValueError:
+                                        output(out_lck, "A number is required")
+                                    else:
+                                        supernodes = db.get_supernodes()
+                                        for idx, sn in enumerate(supernodes):
+                                            if idx == int_option:
+                                                client.dir_ipv4 = sn['ipv4']
+                                                client.dir_ipv6 = sn['ipv6']
+                                                client.dir_port = 3000  # porta delle directory
 
-                                    # faccio il login
-                                    client.login()
+                                        # faccio il login
+                                        client.login()
+
 
             while client.session_id is not None:
                 #print_menu_top(out_lck)
@@ -273,11 +253,11 @@ class Main(QtCore.QThread):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
 
-    main_window = main_window.Ui_MainWindow()
-    main_window.show()
+    mainwindow = main_window.Ui_MainWindow()
+    mainwindow.show()
 
     main = Main()
-    main.print_trigger.connect(main_window.print_on_main_panel)
+    main.print_trigger.connect(mainwindow.print_on_main_panel)
     main.start()
 
     sys.exit(app.exec_())

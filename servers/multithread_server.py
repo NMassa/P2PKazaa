@@ -8,7 +8,7 @@ import config
 from PyQt4 import QtGui, QtCore
 
 class Server(threading.Thread, QtCore.QThread):
-    print_trigger = QtCore.pyqtSignal(str, int)
+    print_trigger = QtCore.pyqtSignal(str, str)
 
     def __init__(self, is_supernode, parent=None):
         QtCore.QThread.__init__(self, parent)

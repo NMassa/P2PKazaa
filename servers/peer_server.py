@@ -5,6 +5,7 @@ import socket, os, hashlib, select, sys, time
 from random import randint
 import threading
 from dbmodules.dbconnection import *
+from PyQt4 import QtCore, QtGui
 from helpers import *
 
 
@@ -16,6 +17,7 @@ class Peer_Server(threading.Thread):
     """
 
     def __init__(self, (client, address), dbConnect, output_lock, print_trigger, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
+        #QtCore.QThread.__init__(self, parent=None)
         threading.Thread.__init__(self)
         self.client = client
         self.address = address
@@ -42,8 +44,8 @@ class Peer_Server(threading.Thread):
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
                 self.print_trigger.emit(
-                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
-                    "\t" + port + "\t" + str(ttl), "12")
+                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
+                    "\t" + str(port) + "\t" + str(ttl), "12")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -70,8 +72,8 @@ class Peer_Server(threading.Thread):
                 ipv4 = cmd[20:35]
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
-                                        ipv6 + "\t" + port, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
+                                        ipv6 + "\t" + str(port), "12")
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
@@ -85,8 +87,8 @@ class Peer_Server(threading.Thread):
                 ttl = int(cmd[80:82])
                 searchStr = cmd[82:102]
                 self.print_trigger.emit(
-                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                    port + "\t" + str(ttl).zfill(2) + "\t" + searchStr, "12")
+                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                    str(port) + "\t" + str(ttl).zfill(2) + "\t" + searchStr, "12")
 
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
@@ -120,8 +122,8 @@ class Peer_Server(threading.Thread):
                 md5 = cmd[80:112]
                 fname = cmd[112:212]
                 self.print_trigger.emit(
-                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                    port + "\t" + md5 + "\t" + fname, "12")
+                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
+                    str(port) + "\t" + md5 + "\t" + fname, "12")
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
@@ -129,7 +131,7 @@ class Peer_Server(threading.Thread):
                 md5Remoto = cmd[4:36]
 
                 self.print_trigger.emit(
-                    "<= " + self.address + "\t" + cmd[0:4] + "\t" + md5Remoto, "12")
+                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + md5Remoto, "12")
 
                 file = self.dbConnect.get_file(md5Remoto)
                 fileFd = None
@@ -157,7 +159,7 @@ class Peer_Server(threading.Thread):
                             6)  # Risposta alla richiesta di download, deve contenere ARET ed il numero di chunks che saranno inviati
 
                         conn.sendall(msg)
-                        self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + msg[4:10], "12")
+                        self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + msg[4:10], "12")
                         output(self.output_lock, "\r\nUpload Started")
 
                         while len(buff) == chunk_size:  # Invio dei chunks

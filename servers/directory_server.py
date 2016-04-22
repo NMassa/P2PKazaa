@@ -7,7 +7,7 @@ from random import randint
 import threading
 from dbmodules.dbconnection import *
 from helpers import *
-
+from PyQt4 import QtCore, QtGui
 
 class Directory_Server(threading.Thread):
     """
@@ -17,6 +17,7 @@ class Directory_Server(threading.Thread):
     """
 
     def __init__(self, (client, address), dbConnect, output_lock, print_trigger, my_ipv4, my_ipv6, my_port, ttl, is_supernode):
+        #QtCore.QThread.__init__(self, parent=None)
         threading.Thread.__init__(self)
         self.client = client
         self.address = address
@@ -43,8 +44,8 @@ class Directory_Server(threading.Thread):
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
-                                        "\t" + port + "\t" + str(ttl), "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
+                                        "\t" + str(port) + "\t" + str(ttl), "12")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -72,8 +73,8 @@ class Directory_Server(threading.Thread):
                 ipv4 = cmd[20:35]
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
-                                        ipv6 + "\t" + port, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
+                                        ipv6 + "\t" + str(port), "12")
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
@@ -84,7 +85,7 @@ class Directory_Server(threading.Thread):
                 ipv4 = cmd[4:19]
                 ipv6 = cmd[20:59]
                 port = cmd[59:64]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[:4] + '\t' + ipv4 + '\t' + ipv6 + '\t' + port, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[:4] + '\t' + ipv4 + '\t' + ipv6 + '\t' + str(port), "12")
 
                 sessionId = self.dbConnect.insert_session(ipv4, ipv6, port)
 
@@ -93,7 +94,7 @@ class Directory_Server(threading.Thread):
                 try:
 
                     conn.send(msg)
-                    self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + sessionId, "12")
+                    self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + sessionId, "12")
 
                 except socket.error, msg:
                     self.print_trigger.emit("Connection Error: %s" % msg, "11")
@@ -105,7 +106,7 @@ class Directory_Server(threading.Thread):
                 sessId = cmd[4:20]
                 md5 = cmd[20:52]
                 fname = cmd[52:152].strip(" ")
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + sessId + "\t" + md5 + "\t" + fname, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + sessId + "\t" + md5 + "\t" + fname, "12")
 
                 self.dbConnect.share_file(sessId, md5, fname)
 
@@ -113,7 +114,7 @@ class Directory_Server(threading.Thread):
                 # “DEFF”[4B].SessionID[16B].Filemd5[32B]
                 sessId = cmd[4:20]
                 md5 = cmd[20:52]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + sessId + "\t" + md5, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + sessId + "\t" + md5, "12")
 
                 self.dbConnect.remove_file(sessId, md5)
 
@@ -121,7 +122,7 @@ class Directory_Server(threading.Thread):
                 # “LOGO”[4B].SessionID[16B]
                 # “ALGO”[4B].#delete[3B]
                 sessId = cmd[4:20]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + sessId, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + sessId, "12")
 
                 delete = self.dbConnect.remove_session(sessId)
 
@@ -130,7 +131,7 @@ class Directory_Server(threading.Thread):
                 try:
 
                     conn.send(msg)
-                    self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + msg[4:7], "12")
+                    self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + msg[4:7], "12")
 
                 except socket.error, msg:
                     self.print_trigger.emit("Connection Error: %s" % msg, "11")
@@ -144,7 +145,7 @@ class Directory_Server(threading.Thread):
 
                 sessId = cmd[4:20]
                 searchStr = cmd[20:40]
-                self.print_trigger.emit("<= " + self.address + "\t" + cmd[0:4] + "\t" + sessId + "\t" + searchStr, "12")
+                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + sessId + "\t" + searchStr, "12")
 
                 if self.dbConnect.get_session(sessId) is not None:
                     pktId = id_generator(16)
@@ -174,7 +175,7 @@ class Directory_Server(threading.Thread):
                         try:
 
                             conn.send(msg)
-                            self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + msg[4:], "12")
+                            self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + msg[4:], "12")
 
                         except socket.error, msg:
                             self.print_trigger.emit("Connection Error: %s" % msg, "11")
@@ -185,7 +186,7 @@ class Directory_Server(threading.Thread):
                         try:
 
                             conn.send("AFIN000")
-                            self.print_trigger.emit("=> " + self.address + "\t" + msg[0:4] + '\t' + msg[4:], "12")
+                            self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + msg[4:], "12")
 
                         except socket.error, msg:
                             self.print_trigger.emit("Connection Error: %s" % msg, "11")
