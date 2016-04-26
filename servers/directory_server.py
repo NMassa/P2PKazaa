@@ -47,7 +47,7 @@ class Directory_Server(threading.Thread):
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4
-                                        + "  " + ipv6 + "  " + str(port) + "  " + str(ttl), "10")
+                                        + "  " + ipv6 + "  " + str(port).zfill(5) + "  " + str(ttl).zfill(2), "10")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -78,7 +78,7 @@ class Directory_Server(threading.Thread):
                 port = cmd[75:80]
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " +
-                    ipv6 + "  " + str(port), "10")
+                    ipv6 + "  " + str(port).zfill(5), "10")
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
@@ -223,7 +223,7 @@ class Directory_Server(threading.Thread):
 
                         # aspetto per 20s le risposte dei supernodi
                         for i in range(0, 10):
-                            self.print_trigger.emit("Collecting responses, time left" + str(10-i), "10")
+                            self.print_trigger.emit("Collecting responses, time left " + str(10-i), "10")
                             time.sleep(1)
 
                     listResults = list(self.dbConnect.get_file_query(pktId)['results'])

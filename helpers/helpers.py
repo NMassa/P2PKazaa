@@ -158,8 +158,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             msg_port = msg[75:80]
             msg_ttl = msg[80:82]
 
-            print_trigger.emit("=> " + str(c.socket.getpeername()) + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
-                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_ttl, print_mode + "2")
+            print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
+                               "  " + msg_ipv6 + "  " + msg_port + "  " + msg_ttl, print_mode + "2")
 
         elif msg[0:4] == "ASUP":
             msg_pktId = msg[4:20]
@@ -167,8 +167,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             msg_ipv6 = msg[36:75]
             msg_port = msg[75:80]
 
-            print_trigger.emit("=> " + str(c.socket.getpeername()) + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
-                               "\t" + msg_ipv6 + "\t" + msg_port, print_mode + "2")
+            print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
+                               "  " + msg_ipv6 + "  " + msg_port, print_mode + "2")
 
         elif msg[0:4] == "QUER":
             msg_pktId = msg[4:20]
@@ -178,8 +178,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             msg_ttl = msg[80:82]
             msg_searchStr = msg[82:102]
 
-            print_trigger.emit("=> " + str(c.socket.getpeername()) + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
-                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_ttl + "\t" + msg_searchStr, print_mode + "2")
+            print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
+                               "  " + msg_ipv6 + "  " + msg_port + "  " + msg_ttl + "  " + msg_searchStr, print_mode + "2")
 
         elif msg[0:4] == "AQUE":
             msg_pktId = msg[4:20]
@@ -189,8 +189,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             msg_md5 = msg[80:112]
             msg_fname = msg[112:212]
 
-            print_trigger.emit("=> " + str(c.socket.getpeername()) + "\t" + msg[0:4] + "\t" + msg_pktId + "\t" + msg_ipv4 +
-                               "\t" + msg_ipv6 + "\t" + msg_port + "\t" + msg_md5 + "\t" + msg_fname, print_mode + "2")
+            print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
+                               "  " + msg_ipv6 + "  " + msg_port + "  " + msg_md5 + "  " + msg_fname, print_mode + "2")
 
         peerSock.close()
     except IOError as e:

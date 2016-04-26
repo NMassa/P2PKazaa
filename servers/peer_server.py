@@ -45,7 +45,7 @@ class Peer_Server(threading.Thread):
                 ttl = int(cmd[80:82])
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 +
-                    "  " + str(port) + "  " + str(ttl), "10")
+                    "  " + str(port).zfill(2) + "  " + str(ttl).zfill(2), "10")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -76,7 +76,7 @@ class Peer_Server(threading.Thread):
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " +
-                                        ipv6 + "  " + str(port), "10")
+                                        ipv6 + "  " + str(port).zfill(2), "10")
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 #self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
@@ -91,7 +91,7 @@ class Peer_Server(threading.Thread):
                 searchStr = cmd[82:102]
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
-                    str(port) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
+                    str(port).zfill(2) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
 
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
@@ -132,7 +132,7 @@ class Peer_Server(threading.Thread):
                 fname = cmd[112:212]
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
-                    str(port) + "  " + md5 + "  " + fname, "10")
+                    str(port).zfill(2) + "  " + md5 + "  " + fname, "10")
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
