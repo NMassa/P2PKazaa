@@ -61,10 +61,10 @@ class Main(QtCore.QThread):
         if supernode_mode:
             while client.session_id is None:
                 #print_menu_top(out_lck)
-                output(out_lck, "## Select one of the following options ('e' to exit): ##")
-                output(out_lck, "## 1: Search supernodes                               ##")
-                output(out_lck, "## 2: View supernodes                                 ##")
-                output(out_lck, "## 3: Log in (to self)                                ##")
+                output(out_lck, "Select one of the following options ('e' to exit): ")
+                output(out_lck, "1: Search supernodes                               ")
+                output(out_lck, "2: View supernodes                                 ")
+                output(out_lck, "3: Log in (to self)                                ")
 
                 int_option = None
                 try:
@@ -101,10 +101,10 @@ class Main(QtCore.QThread):
 
                             while client.session_id is not None:
                                 # print_menu_top(out_lck)
-                                output(out_lck, "## 1: Add file (to self)                              ##")
-                                output(out_lck, "## 2: Delete file (from self)                         ##")
-                                output(out_lck, "## 3: Search file                                     ##")
-                                output(out_lck, "## 4: Log out                                         ##")
+                                output(out_lck, "1: Add file (to self)                              ")
+                                output(out_lck, "2: Delete file (from self)                         ")
+                                output(out_lck, "3: Search file                                     ")
+                                output(out_lck, "4: Log out                                         ")
                                 # print_menu_bottom(out_lck)
 
                                 int_option = None
@@ -140,10 +140,10 @@ class Main(QtCore.QThread):
         else:
             while client.session_id is None:
                 # print_menu_top(out_lck)
-                output(out_lck, "## Select one of the following options ('e' to exit): ##")
-                output(out_lck, "## 1: Search supernodes                               ##")
-                output(out_lck, "## 2: View supernodes                                 ##")
-                output(out_lck, "## 3: Select supernode and log in                     ##")
+                output(out_lck, "Select one of the following options ('e' to exit): ")
+                output(out_lck, "1: Search supernodes                               ")
+                output(out_lck, "2: View supernodes                                 ")
+                output(out_lck, "3: Select supernode and log in                     ")
 
                 int_option = None
                 try:
@@ -214,11 +214,11 @@ class Main(QtCore.QThread):
 
             while client.session_id is not None:
                 #print_menu_top(out_lck)
-                output(out_lck, "## Select one of the following options:               ##")
-                output(out_lck, "## 1: Add file                                        ##")
-                output(out_lck, "## 2: Delete file                                     ##")
-                output(out_lck, "## 3: Search file                                     ##")
-                output(out_lck, "## 4: Log out                                         ##")
+                output(out_lck, "Select one of the following options:               ")
+                output(out_lck, "1: Add file                                        ")
+                output(out_lck, "2: Delete file                                     ")
+                output(out_lck, "3: Search file                                     ")
+                output(out_lck, "4: Log out                                         ")
                 #print_menu_bottom(out_lck)
 
                 int_option = None

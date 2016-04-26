@@ -7,6 +7,7 @@ import socket
 import connection
 import sys
 import time
+from ipaddr import *
 
 def hashfile(file, hasher, blocksize=65536):
     buf = file.read(blocksize)
@@ -162,6 +163,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
 
             print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
                                "  " + msg_ipv6 + "  " + msg_port + "  " + msg_ttl, print_mode + "2")
+            # Spazio
+            print_trigger.emit("", print_mode + "0")
 
         elif msg[0:4] == "ASUP":
             msg_pktId = msg[4:20]
@@ -171,6 +174,8 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
 
             print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
                                "  " + msg_ipv6 + "  " + msg_port, print_mode + "2")
+            # Spazio
+            print_trigger.emit("", print_mode + "0")
 
         elif msg[0:4] == "QUER":
             msg_pktId = msg[4:20]
@@ -183,6 +188,9 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
                                "  " + msg_ipv6 + "  " + msg_port + "  " + msg_ttl + "  " + msg_searchStr, print_mode + "2")
 
+            # Spazio
+            print_trigger.emit("",  print_mode + "0")
+
         elif msg[0:4] == "AQUE":
             msg_pktId = msg[4:20]
             msg_ipv4 = msg[20:35]
@@ -194,6 +202,9 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
             print_trigger.emit("=> " + str(c.socket.getpeername()[0]) + "  " + msg[0:4] + "  " + msg_pktId + "  " + msg_ipv4 +
                                "  " + msg_ipv6 + "  " + msg_port + "  " + msg_md5 + "  " + msg_fname, print_mode + "2")
 
+            # Spazio
+            print_trigger.emit("", print_mode + "0")
+
         peerSock.close()
     except IOError as e:
         print_trigger.emit('sendTo Error: ' + e.message, print_mode+"1")
@@ -202,3 +213,21 @@ def sendTo(print_trigger, print_mode, ipv4, ipv6, port, msg):
     except Exception as e:
         print_trigger.emit('sendTo Error: ' + e.message, print_mode+"1")
 
+def is_sender(address, pktIpv4, pktIpv6):
+    addrIpv4 = address.split(":")[-1]
+    if len(addrIpv4) > 4:
+        fragments = addrIpv4.split(".")
+        for idx, i in enumerate(fragments):
+            fragments[idx] = str(i).zfill(3)
+        mandatorIp = ".".join(fragments)
+        if mandatorIp == pktIpv4:
+            return True
+        else:
+            return False
+    else:
+
+        if IPv6Address(address).exploded == pktIpv6:
+            return True
+        else:
+            return False
+    return False

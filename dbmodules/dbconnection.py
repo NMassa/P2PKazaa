@@ -242,8 +242,6 @@ class MongoConnection():
                                             "port": port
                                             })
         if cursor is not None:
-            # TODO: modificare print
-            output(self.out_lck, "already logged in")
             # Restituisco il session id esistente come da specifiche
             return cursor['session_id']
         else:

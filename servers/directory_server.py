@@ -49,6 +49,9 @@ class Directory_Server(threading.Thread):
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4
                                         + "  " + ipv6 + "  " + str(port).zfill(5) + "  " + str(ttl).zfill(2), "10")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
                 visited = self.dbConnect.insert_packet(pktId)
 
                 # Propago a TUTTI i vicini
@@ -61,14 +64,19 @@ class Directory_Server(threading.Thread):
 
                         msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2)
                         for neighbor in neighbors:
-                            sendTo(self.print_trigger, "1", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                            if not is_sender(self.address[0], neighbor['ipv4'], neighbor['ipv6']):
+                                sendTo(self.print_trigger, "1", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+
                 elif visited:
-                    self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
+                    self.print_trigger.emit("Packet " + pktId + " already passed by, will be ignored.", "10")
 
                 # Se sono supernodo rispondo
-                if self.is_supernode:
+                if self.is_supernode and not visited:
                     msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(3000).zfill(5)
                     sendTo(self.print_trigger, "1", ipv4, ipv6, port, msg)
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
             elif cmd[:4] == 'ASUP':
                 # “ASUP”[4B].Pktid[16B].IPP2P[55B].PP2P[5B]
@@ -83,6 +91,10 @@ class Directory_Server(threading.Thread):
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
 
+
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'QUER':
                 # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
                 pktId = cmd[4:20]
@@ -95,6 +107,9 @@ class Directory_Server(threading.Thread):
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
                     str(port) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
                     files = self.dbConnect.get_files(searchStr)
@@ -104,13 +119,14 @@ class Directory_Server(threading.Thread):
                             if len(file['peers']) > 0:
                                 for peer in file['peers']:
                                     session = self.dbConnect.get_session(peer['session_id'])
+                                    if not is_sender(self.address[0], session['ipv4'], session['ipv6']):
+                                        msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + \
+                                                      file['md5'] + \
+                                                      file['name']
 
-                                    msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + \
-                                                  file['md5'] + \
-                                                  file['name']
-                                    sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
+                                        sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
                 elif visited:
-                    self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
+                    self.print_trigger.emit("Packet " + pktId + " already passed by, will be ignored.", "10")
 
                 if ttl > 1 and not visited:
                     ttl -= 1
@@ -121,7 +137,11 @@ class Directory_Server(threading.Thread):
 
                         msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2) + searchStr
                         for supern in supernodes:
-                            sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
+                            if not is_sender(self.address[0], supern['ipv4'], supern['ipv6']):
+                                sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
             elif cmd[:4] == 'AQUE':
                 # “AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
@@ -137,6 +157,9 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'LOGI':
                 # “LOGI”[4B].IPP2P[55B].PP2P[5B]
                 # “ALGI”[4B].SessionID[16B]
@@ -145,6 +168,9 @@ class Directory_Server(threading.Thread):
                 port = cmd[59:64]
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[:4] + '  ' + ipv4 + '  ' + ipv6 + '  ' + str(port), "10")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
                 sessionId = self.dbConnect.insert_session(ipv4, ipv6, port)
 
@@ -160,6 +186,9 @@ class Directory_Server(threading.Thread):
                 except Exception as e:
                     self.print_trigger.emit('Error: ' + e.message, "11")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'ADFF':
                 # “ADFF”[4B].SessionID[16B].Filemd5[32B].Filename[100B]
                 sessId = cmd[4:20]
@@ -170,6 +199,11 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.share_file(sessId, md5, fname)
 
+                self.print_trigger.emit("File " + fname + " succesfully shared by " + str(self.address[0]), "12")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'DEFF':
                 # “DEFF”[4B].SessionID[16B].Filemd5[32B]
                 sessId = cmd[4:20]
@@ -178,11 +212,19 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.remove_file(sessId, md5)
 
+                self.print_trigger.emit("File " + fname + " succesfully removed by " + str(self.address[0]), "12")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'LOGO':
                 # “LOGO”[4B].SessionID[16B]
                 # “ALGO”[4B].#delete[3B]
                 sessId = cmd[4:20]
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + sessId, "10")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
                 delete = self.dbConnect.remove_session(sessId)
 
@@ -198,6 +240,9 @@ class Directory_Server(threading.Thread):
                 except Exception as e:
                     self.print_trigger.emit('Error: ' + e.message, "11")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'FIND':
                 # “FIND”[4B].SessionID[16B].Ricerca[20B]                                         ricevo dai peer loggati
                 # “AFIN”[4B].#idmd5[3B].{Filemd5_i[32B].Filename_i[100B].#copy_i[3B].
@@ -207,6 +252,9 @@ class Directory_Server(threading.Thread):
                 searchStr = cmd[20:40]
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + sessId + "  " + searchStr,
                                         "10")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
                 if self.dbConnect.get_session(sessId) is not None:
                     pktId = id_generator(16)
@@ -219,7 +267,8 @@ class Directory_Server(threading.Thread):
                         msg = 'QUER' + pktId + self.my_ipv4 + '|' + self.my_ipv6 + self.my_port + str(self.ttl).zfill(
                             2) + searchStr
                         for supern in supernodes:
-                            sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
+                            if not is_sender(self.address[0], supern['ipv4'], supern['ipv6']):
+                                sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
                         # aspetto per 20s le risposte dei supernodi
                         for i in range(0, 10):
@@ -256,6 +305,9 @@ class Directory_Server(threading.Thread):
                             self.print_trigger.emit("Connection Error: %s" % msg, "11")
                         except Exception as e:
                             self.print_trigger.emit('Error: ' + e.message, "11")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
             else:
                 self.print_trigger.emit("\n Command not recognized", "11")

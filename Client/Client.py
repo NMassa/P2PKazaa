@@ -73,6 +73,9 @@ class Client(object):
                 '=> ' + str(self.directory.getpeername()[0]) + '  ' + msg[0:4] + '  ' + self.my_ipv4 + '  ' +
                 self.my_ipv6 + '  ' + str(self.my_port).zfill(5), "00")
 
+            # Spazio
+            self.print_trigger.emit("", "00")
+
             response_message = self.directory.recv(20)  # Risposta della directory, deve contenere ALGI e il session id
             self.print_trigger.emit(
                 '<= ' + str(self.directory.getpeername()[0]) + '  ' + response_message[0:4] + '  ' + response_message[4:20],
@@ -109,6 +112,9 @@ class Client(object):
             self.directory.send(msg)  # Richeista di logout
             self.print_trigger.emit('=> ' + str(self.directory.getpeername()[0]) + '  ' + msg[0:4] + '  ' + self.session_id,
                                     "00")
+
+            # Spazio
+            self.print_trigger.emit("", "00")
 
             response_message = self.directory.recv(
                 7)  # Risposta della directory, deve contenere ALGO e il numero di file che erano stati condivisi
@@ -177,6 +183,10 @@ class Client(object):
                                 self.print_trigger.emit(
                                     '=> ' + str(self.directory.getpeername()[0]) + '  ' + msg[0:4] + '  ' + self.session_id +
                                     '  ' + file.md5 + '  ' + file.name.ljust(100), "00")
+
+                                # Spazio
+                                self.print_trigger.emit("", "00")
+
                             except socket.error, msg:
                                 # output(self.out_lck, 'Socket Error: ' + str(msg))
                                 self.print_trigger.emit('Socket Error: ' + str(msg), '01')
@@ -231,6 +241,8 @@ class Client(object):
                                     '=> ' + str(self.directory.getpeername()[0]) + '  ' + msg[0:4] + '  ' + self.session_id +
                                     '  ' + file.md5, "00")
 
+                                # Spazio
+                                self.print_trigger.emit("", "00")
                             except socket.error, msg:
                                 # output(self.out_lck, 'Socket Error: ' + str(msg))
                                 self.print_trigger.emit('Socket Error: ' + str(msg), '01')
@@ -267,6 +279,9 @@ class Client(object):
                 self.print_trigger.emit(
                     '=> ' + str(self.directory.getpeername()[0]) + '  ' + msg[0:4] + '  ' + self.session_id +
                     '  ' + term.ljust(20), "00")
+
+                # Spazio
+                self.print_trigger.emit("", "00")
 
                 response_message = self.directory.recv(4)
 
@@ -428,6 +443,9 @@ class Client(object):
             download.send(msg)  # Richiesta di download al peer
 
             self.print_trigger.emit('=> ' + str(download.getpeername()[0]) + '  ' + msg[0:4] + '  ' + file.md5, "00")
+
+            # Spazio
+            self.print_trigger.emit("", "00")
 
             response_message = download.recv(
                 10)  # Risposta del peer, deve contenere il codice ARET seguito dalle parti del file

@@ -47,6 +47,9 @@ class Peer_Server(threading.Thread):
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 +
                     "  " + str(port).zfill(2) + "  " + str(ttl).zfill(2), "10")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
                 visited = self.dbConnect.insert_packet(pktId)
 
                 # Propago a TUTTI i vicini
@@ -59,7 +62,8 @@ class Peer_Server(threading.Thread):
 
                         msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2)
                         for neighbor in neighbors:
-                            sendTo(self.print_trigger, "1", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                            if not is_sender(self.address[0], supern['ipv4'], supern['ipv6']):
+                                sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
                 elif visited:
                     self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
 
@@ -78,6 +82,10 @@ class Peer_Server(threading.Thread):
                 self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " +
                                         ipv6 + "  " + str(port).zfill(2), "10")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
+
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 #self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
 
@@ -93,6 +101,9 @@ class Peer_Server(threading.Thread):
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
                     str(port).zfill(2) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
                     files = self.dbConnect.get_files(searchStr)
@@ -103,10 +114,10 @@ class Peer_Server(threading.Thread):
                                 for peer in file['peers']:
 
                                     session = self.dbConnect.get_session(peer['session_id'])
-
-                                    msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + file['md5'] + \
-                                                  file['name']
-                                    sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
+                                    if not is_sender(self.address[0], session['ipv4'], session['ipv6']):
+                                        msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + file['md5'] + \
+                                                      file['name']
+                                        sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
                 elif visited:
                     self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
 
@@ -120,7 +131,8 @@ class Peer_Server(threading.Thread):
 
                         msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2) + searchStr
                         for supern in supernodes:
-                            sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
+                            if not is_sender(self.address[0], supern['ipv4'], supern['ipv6']):
+                                sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
 
             elif cmd[:4] == 'AQUE':
                 # “AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
@@ -136,11 +148,17 @@ class Peer_Server(threading.Thread):
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
+                # Spazio
+                self.print_trigger.emit("", "10")
+
             elif cmd[:4] == 'RETR':
                 md5Remoto = cmd[4:36]
 
                 self.print_trigger.emit(
                     "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + md5Remoto, "10")
+
+                # Spazio
+                self.print_trigger.emit("", "10")
 
                 file = self.dbConnect.get_file(md5Remoto)
                 fileFd = None
@@ -209,6 +227,8 @@ class Peer_Server(threading.Thread):
                     except EOFError:
                         self.print_trigger.emit("Error: You have read a EOF char", "11")
 
+                    # Spazio
+                    self.print_trigger.emit("", "10")
             else:
                 self.print_trigger.emit("Command not recognized", 11)
 
