@@ -44,8 +44,8 @@ class Peer_Server(threading.Thread):
                 port = cmd[75:80]
                 ttl = int(cmd[80:82])
                 self.print_trigger.emit(
-                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 +
-                    "\t" + str(port) + "\t" + str(ttl), "12")
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 +
+                    "  " + str(port) + "  " + str(ttl), "10")
 
                 visited = self.dbConnect.insert_packet(pktId)
 
@@ -60,6 +60,9 @@ class Peer_Server(threading.Thread):
                         msg = 'SUPE' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2)
                         for neighbor in neighbors:
                             sendTo(self.print_trigger, "1", neighbor['ipv4'], neighbor['ipv6'], neighbor['port'], msg)
+                elif visited:
+                    self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
+
 
                 # Se sono supernodo rispondo
                 if self.is_supernode:
@@ -72,11 +75,11 @@ class Peer_Server(threading.Thread):
                 ipv4 = cmd[20:35]
                 ipv6 = cmd[36:75]
                 port = cmd[75:80]
-                self.print_trigger.emit("<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" +
-                                        ipv6 + "\t" + str(port), "12")
+                self.print_trigger.emit("<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " +
+                                        ipv6 + "  " + str(port), "10")
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
-                # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
+                #self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
 
             elif cmd[:4] == 'QUER':
                 # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
@@ -87,8 +90,8 @@ class Peer_Server(threading.Thread):
                 ttl = int(cmd[80:82])
                 searchStr = cmd[82:102]
                 self.print_trigger.emit(
-                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                    str(port) + "\t" + str(ttl).zfill(2) + "\t" + searchStr, "12")
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
+                    str(port) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
 
                 visited = self.dbConnect.insert_packet(pktId)
                 if ttl >= 1 and not visited:
@@ -98,9 +101,15 @@ class Peer_Server(threading.Thread):
                         for file in files:
                             if len(file['peers']) > 0:
                                 for peer in file['peers']:
-                                    msgComplete = msg + peer['ipv4'] + '|' + peer['ipv6'] + peer['port'] + file['md5'] + \
+
+                                    session = self.dbConnect.get_session(peer['session_id'])
+
+                                    msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + file['md5'] + \
                                                   file['name']
                                     sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
+                elif visited:
+                    self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
+
 
                 if ttl > 1 and not visited:
                     ttl -= 1
@@ -122,8 +131,8 @@ class Peer_Server(threading.Thread):
                 md5 = cmd[80:112]
                 fname = cmd[112:212]
                 self.print_trigger.emit(
-                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + pktId + "\t" + ipv4 + "\t" + ipv6 + "\t" +
-                    str(port) + "\t" + md5 + "\t" + fname, "12")
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
+                    str(port) + "  " + md5 + "  " + fname, "10")
 
                 self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
@@ -131,7 +140,7 @@ class Peer_Server(threading.Thread):
                 md5Remoto = cmd[4:36]
 
                 self.print_trigger.emit(
-                    "<= " + str(self.address) + "\t" + cmd[0:4] + "\t" + md5Remoto, "12")
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + md5Remoto, "10")
 
                 file = self.dbConnect.get_file(md5Remoto)
                 fileFd = None
@@ -159,7 +168,7 @@ class Peer_Server(threading.Thread):
                             6)  # Risposta alla richiesta di download, deve contenere ARET ed il numero di chunks che saranno inviati
 
                         conn.sendall(msg)
-                        self.print_trigger.emit("=> " + str(self.address) + "\t" + msg[0:4] + '\t' + msg[4:10], "12")
+                        self.print_trigger.emit("=> " + str(self.address[0]) + "  " + msg[0:4] + '  ' + msg[4:10], "12")
                         output(self.output_lock, "\r\nUpload Started")
 
                         while len(buff) == chunk_size:  # Invio dei chunks

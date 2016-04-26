@@ -28,14 +28,14 @@ class Server(threading.Thread, QtCore.QThread):
 
     def run(self):
 
-        self.print_trigger.emit("Start multithread server...", "10")
+        self.print_trigger.emit("Starting server...", "10")
         try:
             for item in self.port_dir, self.port_peer:
                 self.sock_lst.append(socket.socket(socket.AF_INET6, socket.SOCK_STREAM))
                 self.sock_lst[-1].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 self.sock_lst[-1].bind((self.host, item))
                 self.sock_lst[-1].listen(self.backlog)
-                self.print_trigger.emit("Listening on " + str(item), "10")
+                #self.print_trigger.emit("Listening on " + str(item), "10")
         except socket.error, (value, message):
             if self.sock_lst[-1]:
                 self.sock_lst[-1].close()
@@ -44,6 +44,7 @@ class Server(threading.Thread, QtCore.QThread):
             sys.exit(1)
 
         self.running = 1
+        self.print_trigger.emit("Server running", "10")
         while self.running:
             inputready, outputready, exceptready = select.select(self.sock_lst, [], [])
 

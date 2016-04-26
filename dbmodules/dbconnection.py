@@ -214,8 +214,6 @@ class MongoConnection():
         """
         cursor = self.db.packets.find_one({"pktId": pktId})
         if cursor is not None:
-            # TODO: modificare print
-            output(self.out_lck, "already visited")
             return True
         else:
             try:
@@ -484,7 +482,7 @@ class MongoConnection():
                 for peer in results:
                     found = [neighbor for neighbor in neighbors if
                              peer['ipv4'] == neighbor['ipv4'] or peer['ipv6'] == neighbor[
-                                 'ipv6']]  # se è già nella lista dei vicini non lo aggiungo
+                                 'ipv6']]
 
                     if not found:  # se non esiste lo aggiungo
                         self.insert_neighbor(peer['ipv4'], peer['ipv6'], peer['port'], peer['is_supernode'])
