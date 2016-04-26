@@ -44,8 +44,10 @@ class Client(object):
 
 
         # Searching for shareable files
+        # TODO: cambiare sul mac con ../fileCondivisi
         for root, dirs, files in os.walk("fileCondivisi"):
             for file in files:
+                # TODO: cambiare sul mac con ../fileCondivisi
                 file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
                 new_file = SharedFile(file, file_md5)
                 self.files_list.append(new_file)
@@ -443,6 +445,7 @@ class Client(object):
                 # tmp = 0
 
                 filename = file.name
+                # TODO: cambiare sul mac con ../received
                 fout = open('received/' + filename,
                             "wb")  # Apertura di un nuovo file in write byte mode (sovrascrive se già esistente)
 

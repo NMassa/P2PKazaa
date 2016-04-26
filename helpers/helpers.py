@@ -19,8 +19,10 @@ def hashfile(file, hasher, blocksize=65536):
 def get_shareable_files():
     files_list = []
 
+    # TODO: cambiare sul mac con ../fileCondivisi
     for root, dirs, files in os.walk("fileCondivisi"):
         for file in files:
+            # TODO: cambiare sul mac con ../fileCondivisi
             file_md5 = hashfile(open("fileCondivisi/" + file, 'rb'), hashlib.md5())
             files_list.append({
                 'name': file,

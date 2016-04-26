@@ -145,10 +145,12 @@ class Peer_Server(threading.Thread):
                 file = self.dbConnect.get_file(md5Remoto)
                 fileFd = None
                 try:
+                    # TODO: cambiare sul mac con ../fileCondivisi
                     fileFd = open("fileCondivisi/" + file['name'], "rb")
                 except Exception, e:
                     self.print_trigger.emit('File Error: ' + e.message + "\n", "11")
                 else:
+                    # TODO: cambiare sul mac con ../fileCondivisi
                     tot_dim = os.stat("fileCondivisi/" + file['name']).st_size  # Calcolo delle dimesioni del file
                     n_chunks = int(tot_dim // 1024)  # Calcolo del numero di parti
                     resto = tot_dim % 1024  # Eventuale resto
