@@ -358,8 +358,11 @@ class MongoConnection():
             results = query['results']
 
             if results:
+                file_found = False
                 for file in results:  # cerco il file nei risultati precedenti
                     if file['md5'] == md5:  # se esiste verifico se il nuovo peer è già nella lista
+                        file_found = True
+
                         peers = file['peers']
                         if peers:
                             found = [peer for peer in peers if
@@ -378,6 +381,21 @@ class MongoConnection():
                                           })
 
                         file['peers'] = peers  # aggiorno la lista
+
+                # se il file non era già tra i risultati lo aggiungo
+                if not file_found:
+                    peers = []
+                    peers.append({"ipv4": ipv4,
+                                  "ipv6": ipv6,
+                                  "port": port
+                                  })
+                    new_file = {
+                        "name": name,
+                        "md5": md5,
+                        "peers": peers
+                    }
+
+                    results.append(new_file)
 
                 # Aggiorno la ricerca
                 self.db.file_queries.update({"pktId": pktId},

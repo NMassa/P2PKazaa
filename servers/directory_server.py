@@ -199,7 +199,7 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.share_file(sessId, md5, fname)
 
-                self.print_trigger.emit("File " + fname + " succesfully shared by " + str(self.address[0]), "12")
+                self.print_trigger.emit("File succesfully shared by " + str(self.address[0]), "12")
 
                 # Spazio
                 self.print_trigger.emit("", "10")
@@ -212,7 +212,7 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.remove_file(sessId, md5)
 
-                self.print_trigger.emit("File " + fname + " succesfully removed by " + str(self.address[0]), "12")
+                self.print_trigger.emit("File succesfully removed by " + str(self.address[0]), "12")
 
                 # Spazio
                 self.print_trigger.emit("", "10")
@@ -259,6 +259,7 @@ class Directory_Server(threading.Thread):
                 if self.dbConnect.get_session(sessId) is not None:
                     pktId = id_generator(16)
                     self.dbConnect.insert_file_query(pktId, searchStr)
+
                     supernodes = self.dbConnect.get_supernodes()
 
                     if (len(supernodes) > 0):
