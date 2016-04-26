@@ -68,12 +68,12 @@ class Client(object):
 
             self.directory.send(msg)  # Richiesta di login
             self.print_trigger.emit(
-                '=> ' + self.directory.getpeername() + '  ' + msg[0:4] + '  ' + self.my_ipv4 + '  ' +
+                '=> ' + str(self.directory.getpeername()) + '  ' + msg[0:4] + '  ' + self.my_ipv4 + '  ' +
                 self.my_ipv6 + '  ' + str(self.my_port).zfill(5), "00")
 
             response_message = self.directory.recv(20)  # Risposta della directory, deve contenere ALGI e il session id
             self.print_trigger.emit(
-                '<= ' + self.directory.getpeername() + '  ' + response_message[0:4] + '  ' + response_message[4:20],
+                '<= ' + str(self.directory.getpeername()) + '  ' + response_message[0:4] + '  ' + response_message[4:20],
                 '02')
 
         except socket.error, msg:
@@ -105,13 +105,13 @@ class Client(object):
             self.check_connection()
 
             self.directory.send(msg)  # Richeista di logout
-            self.print_trigger.emit('=> ' + self.directory.getpeername() + '  ' + msg[0:4] + '  ' + self.session_id,
+            self.print_trigger.emit('=> ' + str(self.directory.getpeername()) + '  ' + msg[0:4] + '  ' + self.session_id,
                                     "00")
 
             response_message = self.directory.recv(
                 7)  # Risposta della directory, deve contenere ALGO e il numero di file che erano stati condivisi
             self.print_trigger.emit(
-                '<= ' + self.directory.getpeername() + '  ' + response_message[0:4] + '  ' + response_message[4:7],
+                '<= ' + str(self.directory.getpeername()) + '  ' + response_message[0:4] + '  ' + response_message[4:7],
                 '02')
 
         except socket.error, msg:
@@ -173,7 +173,7 @@ class Client(object):
 
                                 self.directory.send(msg)
                                 self.print_trigger.emit(
-                                    '=> ' + self.directory.getpeername() + '  ' + msg[0:4] + '  ' + self.session_id +
+                                    '=> ' + str(self.directory.getpeername()) + '  ' + msg[0:4] + '  ' + self.session_id +
                                     '  ' + file.md5 + '  ' + file.name.ljust(100), "00")
                             except socket.error, msg:
                                 # output(self.out_lck, 'Socket Error: ' + str(msg))
@@ -226,7 +226,7 @@ class Client(object):
                                 self.directory.send(
                                     msg)  # Richiesta di rimozione del file dalla directory, deve contenere session id e md5
                                 self.print_trigger.emit(
-                                    '=> ' + self.directory.getpeername() + '  ' + msg[0:4] + '  ' + self.session_id +
+                                    '=> ' + str(self.directory.getpeername()) + '  ' + msg[0:4] + '  ' + self.session_id +
                                     '  ' + file.md5, "00")
 
                             except socket.error, msg:
@@ -263,13 +263,13 @@ class Client(object):
 
                 self.directory.send(msg)
                 self.print_trigger.emit(
-                    '=> ' + self.directory.getpeername() + '  ' + msg[0:4] + '  ' + self.session_id +
+                    '=> ' + str(self.directory.getpeername()) + '  ' + msg[0:4] + '  ' + self.session_id +
                     '  ' + term.ljust(20), "00")
 
                 response_message = self.directory.recv(4)
 
                 self.print_trigger.emit(
-                    '<= ' + self.directory.getpeername() + '  ' + response_message[0:4],
+                    '<= ' + str(self.directory.getpeername()) + '  ' + response_message[0:4],
                     '02')
             except socket.error, msg:
                 # output(self.out_lck, 'Socket Error: ' + str(msg))

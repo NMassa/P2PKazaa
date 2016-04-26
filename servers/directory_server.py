@@ -67,7 +67,7 @@ class Directory_Server(threading.Thread):
 
                 # Se sono supernodo rispondo
                 if self.is_supernode:
-                    msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5)
+                    msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(3000).zfill(5)
                     sendTo(self.print_trigger, "1", ipv4, ipv6, port, msg)
 
             elif cmd[:4] == 'ASUP':
@@ -82,6 +82,60 @@ class Directory_Server(threading.Thread):
 
                 self.dbConnect.insert_neighbor(ipv4, ipv6, port, "true")
                 # self.dbConnect.update_peer_query(pktId, ipv4, ipv6, port, "true")
+
+            elif cmd[:4] == 'QUER':
+                # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]            ricevo solo dai supernodi
+                pktId = cmd[4:20]
+                ipv4 = cmd[20:35]
+                ipv6 = cmd[36:75]
+                port = cmd[75:80]
+                ttl = int(cmd[80:82])
+                searchStr = cmd[82:102]
+                self.print_trigger.emit(
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
+                    str(port) + "  " + str(ttl).zfill(2) + "  " + searchStr, "10")
+
+                visited = self.dbConnect.insert_packet(pktId)
+                if ttl >= 1 and not visited:
+                    files = self.dbConnect.get_files(searchStr)
+                    if files is not None:
+                        msg = 'AQUE' + pktId
+                        for file in files:
+                            if len(file['peers']) > 0:
+                                for peer in file['peers']:
+                                    session = self.dbConnect.get_session(peer['session_id'])
+
+                                    msgComplete = msg + session['ipv4'] + '|' + session['ipv6'] + session['port'] + \
+                                                  file['md5'] + \
+                                                  file['name']
+                                    sendTo(self.print_trigger, "1", ipv4, ipv6, port, msgComplete)
+                elif visited:
+                    self.print_trigger.emit("Packet " + pktId + "already passed by, will be ignored.", "10")
+
+                if ttl > 1 and not visited:
+                    ttl -= 1
+                    supernodes = self.dbConnect.get_supernodes()
+
+                    if (len(supernodes) > 0):
+                        # “QUER”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].TTL[2B].Ricerca[20B]          mando solo ai supernodi
+
+                        msg = 'QUER' + pktId + ipv4 + '|' + ipv6 + port + str(ttl).zfill(2) + searchStr
+                        for supern in supernodes:
+                            sendTo(self.print_trigger, "1", supern['ipv4'], supern['ipv6'], supern['port'], msg)
+
+            elif cmd[:4] == 'AQUE':
+                # “AQUE”[4B].Pktid[16B].IPP2P[55B].PP2P[5B].Filemd5[32B].Filename[100B]     ricevo solo dai supernodi
+                pktId = cmd[4:20]
+                ipv4 = cmd[20:35]
+                ipv6 = cmd[36:75]
+                port = cmd[75:80]
+                md5 = cmd[80:112]
+                fname = cmd[112:212]
+                self.print_trigger.emit(
+                    "<= " + str(self.address[0]) + "  " + cmd[0:4] + "  " + pktId + "  " + ipv4 + "  " + ipv6 + "  " +
+                    str(port) + "  " + md5 + "  " + fname, "10")
+
+                self.dbConnect.update_file_query(pktId, md5, fname, ipv4, ipv6, port)
 
             elif cmd[:4] == 'LOGI':
                 # “LOGI”[4B].IPP2P[55B].PP2P[5B]

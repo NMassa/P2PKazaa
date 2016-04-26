@@ -66,7 +66,7 @@ class Peer_Server(threading.Thread):
 
                 # Se sono supernodo rispondo
                 if self.is_supernode:
-                    msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5)
+                    msg = "ASUP" + pktId + self.my_ipv4 + "|" + self.my_ipv6 + str(3000).zfill(5)
                     sendTo(self.print_trigger, "1", ipv4, ipv6, port, msg)
 
             elif cmd[:4] == 'ASUP':
