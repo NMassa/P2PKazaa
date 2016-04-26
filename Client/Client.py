@@ -487,6 +487,9 @@ class Client(object):
                 output(self.out_lck, 'Error: unknown response from directory.\n')
 
     def search_supe(self):
+
+        output(self.out_lck, "Searching supernodes among neighbors...")
+
         pktId = id_generator(16)
         msg = "SUPE" + str(pktId) + self.my_ipv4 + "|" + self.my_ipv6 + str(self.my_port).zfill(5) + str(
             self.ttl).zfill(2)
